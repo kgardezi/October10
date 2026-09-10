@@ -1,0 +1,13 @@
+STATUS: TEMPLATE - NOT VERIFIED SITE DATA
+Fill only confirmed facts. Leave unknowns as UNKNOWN. Replace this header with DRAFT or VERIFIED and a verification date when appropriate.
+Source/owner: UNKNOWN
+Last verified: UNKNOWN
+
+SOURCE AND PROGRESS LEDGER
+Source filename/version | Site/scope | Section/chunk | Processed? | Output document/section | Unresolved items
+UNKNOWN | UNKNOWN | UNKNOWN | NO | UNKNOWN | UNKNOWN
+Counting unit used in report: UNKNOWN
+Duplicate groups and source locations: UNKNOWN
+Conflicts awaiting review: UNKNOWN
+Last complete item and next continuation point: UNKNOWN
+Unretrieved/unprocessed source content: UNKNOWN

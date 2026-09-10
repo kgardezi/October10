@@ -1,0 +1,23 @@
+CISCO REFERENCE STRUCTURE AND OUTPUT
+
+Use the attached working Cisco Catalyst 9300 configuration as the structural template for the generated target configuration.
+
+Preserve its section sequence, grouping, indentation, interface-block style, and “!” separators. Do not reorganize the configuration into your own topic order.
+
+Use the matched reference Juniper/Cisco pair to identify how source features were implemented. Preserve applicable approved Cisco patterns, while taking target-specific values from the target Juniper configuration and supplied target hardware/port mapping.
+
+Do not blindly copy reference-site hostnames, addresses, VLANs, interfaces, credentials, or other device-specific settings. Do not assume every line in a working reference applies to the target.
+
+Return the target configuration in ONE continuous code block, following the reference’s flow from beginning to end. Do not split it into separate blocks for VLANs, interfaces, AAA, routing, or management.
+
+Keep explanations, headings, migration notes, and review items outside the configuration block. Do not use “same as above,” “repeat for remaining interfaces,” ellipses, or other omissions.
+
+Place target features absent from the reference in the appropriate related section and explain the addition outside the configuration block. Identify incompatible or inapplicable reference sections rather than silently copying them.
+
+Before presenting the result, verify both:
+1. Structure: the applicable sections follow the Cisco reference order.
+2. Content: all target configuration areas are accounted for, with unresolved items identified.
+
+If the complete Cisco reference or target configuration is not accessible, identify the missing content. Do not invent its layout or claim the output is complete.
+
+If unresolved values remain, label the output DRAFT — NOT DEPLOYABLE outside the code block. If the full configuration exceeds the response limit, provide a complete text file when supported; otherwise explain the limit rather than silently truncating it.

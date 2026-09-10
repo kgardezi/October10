@@ -1,0 +1,4 @@
+DEFAULT: Paste site evidence or describe the issue.
+INVESTIGATE: Analyze [symptom] during [time/timezone] using the current site references and attached logs. Separate confirmed findings from hypotheses and list the next useful checks.
+UPGRADE: Apply Validation_Workflow to the attached labelled PRE/POST captures. End with the comparison table and identify coverage gaps.
+HANDOFF: Draft an updated Current_Status file from verified findings in this chat. Preserve open questions and include source references, dates and next actions. Do not invent owners or deadlines.

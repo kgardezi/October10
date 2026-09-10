@@ -1,0 +1,8 @@
+OPTIONAL REFERENCE - NO FILE REQUIRED FOR NORMAL USE
+Preferred style: short, clear, natural professional English.
+Return one version by default. Preserve technical meaning and uncertainty.
+Add only verified organization-specific terminology or anonymized examples below.
+Term/acronym and preferred spelling:
+[optional]
+Examples of preferred writing:
+[optional; examples are style references, not current incident facts]

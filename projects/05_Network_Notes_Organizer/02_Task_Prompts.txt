@@ -1,0 +1,3 @@
+DEFAULT: Attach notes or paste text to organize.
+Organize these files into separate site references where appropriate. Keep command text exact, preserve source references, separate historical items, and report unprocessed sections.
+CONTINUE: Resume from the attached progress ledger and source chunk. Do not repeat completed records; reconcile duplicates with the existing draft.

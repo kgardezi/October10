@@ -1,0 +1,10 @@
+VALIDATION CHECKLIST - SELECT APPLICABLE AREAS BEFORE THE CHANGE
+This is an evidence checklist, not a verified vendor command list.
+All: identity/version/uptime; interfaces; MACs by port/VLAN; CDP; LLDP; trunks/VLANs; STP; port-channels; errors/logs; hardware.
+Catalyst where present: stack member/link health; PoE/power.
+Nexus where present: vPC peer/member consistency; modules; configured overlay or routing services.
+ASR920 where present: L2 VC/pseudowire/xconnect identity and state; attachment circuits/service instances/bridge domains; relevant MPLS transport and routing peers.
+Mark each Required / Optional / N/A, state expected condition, and link the PRE and POST evidence. Confirm actual supported commands against platform/release or approved local runbooks.
+Summary table columns: Check | PRE/OLD | POST/NEW | Difference | Status.
+Exact exception detail: Item ID | PRE | POST | Expected change? | Finding.
+A full-looking table is not proof of full source coverage.

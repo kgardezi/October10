@@ -1,0 +1,11 @@
+STATUS: TEMPLATE - NOT VERIFIED SITE DATA
+Fill only confirmed facts. Leave unknowns as UNKNOWN. Replace this header with DRAFT or VERIFIED and a verification date when appropriate.
+Source/owner: UNKNOWN
+Last verified: UNKNOWN
+
+MIGRATION CONVENTIONS
+Reference pair filenames and matching device/cutover evidence: UNKNOWN
+Area | Observed Juniper pattern | Observed Cisco pattern | Proposed reusable rule | Approved/inferred | Exceptions/source
+UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | INFERRED | UNKNOWN
+Approval/date: UNKNOWN
+Absence from a reference is not approval to omit a target feature.

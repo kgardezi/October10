@@ -1,0 +1,3 @@
+REFERENCE STAGE: Compare the attached matched reference Juniper and production Cisco configurations. Extract reusable conventions, exceptions and source coverage. Do not convert a target yet.
+TARGET STAGE: Convert TARGET_JUNIPER using the reference pair, approved standards and target hardware/port mapping. Account for all accessible target stanzas and identify any unread sections or unresolved translations.
+REVIEW: Check this draft against the source inventory and mapping. Return omissions, unintended changes and unresolved dependencies before revising it.

@@ -1,0 +1,18 @@
+STATUS: TEMPLATE - NOT VERIFIED SITE DATA
+Fill only confirmed facts. Leave unknowns as UNKNOWN. Replace this header with DRAFT or VERIFIED and a verification date when appropriate.
+Source/owner: UNKNOWN
+Last verified: UNKNOWN
+
+CHANGE SCOPE AND BASELINE
+Change ID, devices, roles and critical services: UNKNOWN
+Current and target software versions: UNKNOWN
+Upgrade/reload/replacement: UNKNOWN
+Capture timestamps/timezones: UNKNOWN
+Approved expected differences: UNKNOWN
+Required checks and source commands/files: UNKNOWN
+Critical links/neighbors/circuits: UNKNOWN
+OLD -> NEW device/port mapping (replacement only): UNKNOWN
+Known pre-existing issues: UNKNOWN
+Convergence expectations from approved procedure: UNKNOWN
+Rollback triggers and approved recovery procedure: UNKNOWN
+Evidence index: UNKNOWN

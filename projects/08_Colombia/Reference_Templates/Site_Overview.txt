@@ -1,0 +1,13 @@
+STATUS: TEMPLATE - NOT VERIFIED SITE DATA
+Fill only confirmed facts. Leave unknowns as UNKNOWN. Replace this header with DRAFT or VERIFIED and a verification date when appropriate.
+Source/owner: UNKNOWN
+Last verified: UNKNOWN
+
+ENVIRONMENT OVERVIEW
+Site/scope: Colombia
+Device hostname | Role | Vendor/model | OS/version | Management reference
+[fill verified inventory]
+TOPOLOGY: Describe each link with local device/port, remote device/port, link role, capacity and relevant VLAN/VRF. Add a textual explanation alongside diagrams.
+Business services and critical paths: UNKNOWN
+Naming conventions and internal terms: UNKNOWN
+Approved standards and exceptions: UNKNOWN

@@ -1,0 +1,15 @@
+STATUS: TEMPLATE - NOT VERIFIED SITE DATA
+Fill only confirmed facts. Leave unknowns as UNKNOWN. Replace this header with DRAFT or VERIFIED and a verification date when appropriate.
+Source/owner: UNKNOWN
+Last verified: UNKNOWN
+
+CIRCUIT RECORD (repeat per circuit)
+Circuit ID/provider: UNKNOWN
+Local device/port and remote device/port: UNKNOWN
+Service type, capacity, contractual shaping/policing: UNKNOWN
+VRF/VLAN/VC or service identifiers: UNKNOWN
+Primary/backup behavior and protected services: UNKNOWN
+Monitoring source, normal utilization and measurement interval: UNKNOWN
+Provider ticket and latest verified finding: UNKNOWN
+TEXT PATH DESCRIPTION
+Client/site -> intermediate devices/circuit -> destination/service: UNKNOWN

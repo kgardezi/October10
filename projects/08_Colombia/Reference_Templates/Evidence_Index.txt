@@ -1,0 +1,18 @@
+STATUS: TEMPLATE - NOT VERIFIED SITE DATA
+Fill only confirmed facts. Leave unknowns as UNKNOWN. Replace this header with DRAFT or VERIFIED and a verification date when appropriate.
+Source/owner: UNKNOWN
+Last verified: UNKNOWN
+
+REFERENCE AND EVIDENCE INDEX
+For each file record:
+Filename:
+Role: APPROVED STANDARD / REFERENCE EXAMPLE / CONFIG SNAPSHOT / HEALTHY BASELINE / INCIDENT LOG / PRE / POST / DRAFT
+Site/device:
+Capture date/time/timezone:
+OS/version if applicable:
+Scope/commands included:
+Completeness: COMPLETE CAPTURE / PARTIAL / UNKNOWN
+Known redactions:
+Current or superseded by:
+Source/ticket:
+Do not store the same filename for multiple conflicting captures. Retain raw baseline evidence separately from summaries.

@@ -1,0 +1,5 @@
+DEFAULT: Paste output or describe the issue; no starter prompt is required.
+OPTIONAL FOCUS:
+Analyze the attached evidence for [symptom]. Focus on [device/site/VRF/time window]. Give a concise assessment and only the next checks that would change the diagnosis.
+INTERNAL RESEARCH:
+Search available internal records for [issue/identifiers/time window]. Return relevant record IDs, dates, documented findings and unresolved questions. Do not update records.

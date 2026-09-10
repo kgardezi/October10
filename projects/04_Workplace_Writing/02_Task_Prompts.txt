@@ -1,0 +1,5 @@
+DEFAULT: Paste your message directly. No additional prompt needed.
+OPTIONAL OVERRIDES:
+Make this firmer while staying polite: [message]
+Shorten this without removing the technical findings: [message]
+Translate this into French and keep it brief: [message]

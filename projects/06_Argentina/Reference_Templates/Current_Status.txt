@@ -1,0 +1,22 @@
+STATUS: TEMPLATE - NOT VERIFIED SITE DATA
+Fill only confirmed facts. Leave unknowns as UNKNOWN. Replace this header with DRAFT or VERIFIED and a verification date when appropriate.
+Source/owner: UNKNOWN
+Last verified: UNKNOWN
+
+CURRENT STATUS
+Site/issue: Argentina / UNKNOWN
+Last updated (date, time, timezone): UNKNOWN
+Impact and affected scope: UNKNOWN
+Confirmed findings (each with source/time):
+- UNKNOWN
+Open hypotheses (supporting/contradicting evidence):
+- UNKNOWN
+Tests completed and results:
+- UNKNOWN
+Decisions/changes and authorization reference:
+- UNKNOWN
+Next action | Owner | Due date | Dependency
+UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN
+Resolved or superseded findings: UNKNOWN
+Evidence files and related chat/ticket references: UNKNOWN
+This is a maintained summary, not proof that all other chats are accessible.

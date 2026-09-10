@@ -1,0 +1,13 @@
+STATUS: TEMPLATE - NOT VERIFIED SITE DATA
+Fill only confirmed facts. Leave unknowns as UNKNOWN. Replace this header with DRAFT or VERIFIED and a verification date when appropriate.
+Source/owner: UNKNOWN
+Last verified: UNKNOWN
+
+KNOWN ISSUE RECORD (repeat per issue)
+Symptom and scope: UNKNOWN
+Platform/release: UNKNOWN
+Confirmed cause, if any: UNKNOWN
+Evidence and date: UNKNOWN
+Resolution and verification: UNKNOWN
+Conditions where this does NOT apply: UNKNOWN
+Related ticket/source: UNKNOWN

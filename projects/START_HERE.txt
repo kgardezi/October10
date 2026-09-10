@@ -1,0 +1,43 @@
+LLM@CIB PROJECT STARTER PACK - Version 1 - 2026-09-10
+Nine project folders; UTF-8 text files suitable for Notepad++.
+These are ready-to-copy instructions and editable reference templates, not populated device records. No CIB app or GitHub changes were made.
+
+SETUP
+1. Create the corresponding project in LLM@CIB.
+2. Copy the CONTENT of 01_Project_Instructions.txt into the project's Instructions field. Do not merely attach it and expect it to become standing instructions.
+3. 02_Task_Prompts.txt contains optional short starters. Copy only the relevant starter into a chat or save it as a Favorite Prompt. Normal pasted input should work without one.
+4. Fill useful Reference_Templates with verified workplace facts, then attach those files in the project's Files section. UNKNOWN and TEMPLATE markers are intentional. Do not upload empty templates as factual knowledge.
+5. Attach temporary logs, target migration files and PRE/POST outputs to the relevant chat. Keep reusable references in project Files. Use one chat per incident, migration or change.
+6. Site Validation_Workflow.txt is a complete reusable workflow, ready to attach as a reference or load as a Favorite Prompt when validating inside a site project. It mirrors the Upgrades workflow; keep copies aligned if edited later.
+7. Update current-status files after meaningful progress by reviewing the model's draft and replacing the file manually if the app has no write capability. A summary does not replace raw evidence.
+
+PROJECTS
+01 Daily Network Analysis
+02 Upgrades
+03 Migration
+04 Workplace Writing
+05 Network Notes Organizer
+06 Argentina
+07 Mexico
+08 Colombia
+09 Brazil
+
+MINIMUM USEFUL REFERENCES
+Daily analysis: environment overview; approved standards if available.
+Upgrades: change scope/required checks plus actual labelled PRE and POST evidence.
+Migration: matched reference pair; target config; actual target hardware/port mapping; approved conventions.
+Writing: none required.
+Notes organizer: source TXT files; progress ledger for large collections.
+Sites: overview/topology, current-status summary, dated configurations; circuits where relevant.
+Add approved vendor/version-specific runbooks where needed. No unverified command lists or invented site configurations are included.
+
+INPUT AND MODEL NOTES
+Use GPT OSS for text-based engineering analysis. For an image, select a model with supported image input such as the Gemma or Mistral option documented by your app; verify extracted identifiers. A file icon does not prove all image/PDF content is accessible. The prompts do not depend on a particular model or reasoning toggle.
+Your RAG pipeline may retrieve selected passages. Instructions cannot force unavailable whole-file access. Ask for coverage and missing sections; use a parser for large exact comparisons where available.
+Project instructions, chat requests and files are complementary context. App-level precedence, cross-chat memory and global-sidebar behavior are not verified by this pack.
+
+REFERENCE HYGIENE
+Use dated names: DEVICE_config_YYYY-MM-DD.txt; DEVICE_PRE_YYYY-MM-DD.txt; DEVICE_POST_YYYY-MM-DD.txt. Include capture time/timezone inside files. Mark superseded snapshots. Never copy secret values into reference templates.
+
+FIRST CHECK
+Try one familiar resolved incident, one known PRE/POST difference, one migration excerpt and one rough message. Confirm source coverage, exact changed items, no invented details and the desired concise output before expanding use. These prompts have been reviewed for consistency here, but not executed in your CIB deployment.

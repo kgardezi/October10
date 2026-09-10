@@ -1,0 +1,5 @@
+DEFAULT: Attach clearly labelled PRE files, then POST files in the same chat.
+PRE capture: [device], [date/time/timezone], intended change [description], target version [value or unknown]. More PRE files to follow: [yes/no].
+POST capture: [device], [date/time/timezone]. Compare with the available PRE baseline and finish with the comparison table.
+REPLACEMENT: Compare OLD and NEW evidence using the attached approved port mapping. Identify unmapped ports rather than guessing.
+SITE USE: These validation instructions can be copied into a Favorite Prompt used inside a site project; retain the site evidence in that one chat.

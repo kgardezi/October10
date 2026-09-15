@@ -1,0 +1,98 @@
+Short description
+
+Campus Access Switch Refresh – Replace Juniper EX4300 with Cisco Catalyst 9300
+
+Description
+
+Replace the existing Juniper EX4300 access switch with a Cisco Catalyst 9300 as part of the campus hardware refresh programme. The affected asset and site details will be recorded in the internal change record.
+
+The scope includes validating the prepared Cisco configuration, activating the uplinks, migrating connected users and devices, and completing post-migration service checks. Network Engineering will perform configuration and validation activities, supported by Local IT/Remote Hands for installation and cable migration.
+
+The existing Juniper switch and its configuration will remain available throughout the change window to support rollback.
+
+References to previous successful changes will be maintained in the internal change record.
+
+Justification
+
+This change addresses the hardware and software lifecycle risks identified for the existing Juniper EX4300 platform and supports campus network standardisation on Cisco Catalyst 9300.
+
+The refresh is intended to maintain a supportable access network, enable ongoing software maintenance and security remediation, and improve operational consistency.
+
+Deferring the change prolongs reliance on the existing platform and its associated maintenance and support limitations. Relevant vendor lifecycle evidence and any applicable internal compliance requirement will be attached to the change record.
+
+Implementation plan
+
+Total planned change window: 10 hours, including a reserved four-hour rollback and verification period.
+
+1. Confirm change approval, implementation resources, stakeholder notification, and Local IT/Remote Hands availability.
+2. Verify the affected asset, connected services, uplink connections, and source-to-destination port mapping.
+3. Back up the current Juniper configuration and capture baseline interface status, VLAN membership, uplink status, device health, and monitoring results.
+4. Validate the prepared Cisco configuration against the required production settings. Confirm management access, VLANs, uplinks, spanning tree, authentication, voice services where applicable, and monitoring settings.
+5. Confirm the replacement switch is installed, powered, and free of hardware alarms. Keep the existing switch available for rollback.
+6. Activate the Cisco uplinks in the planned sequence. Verify connectivity and spanning-tree stability before moving user connections.
+7. Local IT/Remote Hands will migrate cables individually according to the port mapping. Network Engineering will validate each migrated connection or agreed batch before proceeding.
+8. Complete the post-change test plan and obtain Local IT/service-owner acceptance.
+9. Save the validated Cisco configuration, update asset and monitoring records, and attach implementation and test evidence to the change.
+10. Notify stakeholders of completion and any outstanding issues.
+
+Stop migration and initiate rollback if a service-affecting issue remains unresolved for two hours, or earlier if acceptance criteria cannot be achieved. Rollback must start no later than six hours after the window begins, preserving four hours for restoration and verification.
+
+Risk and impact analysis
+
+Proposed risk level: Medium, subject to the ServiceNow risk assessment.
+
+Users and devices connected to the switch will experience a temporary network interruption during cable migration and service re-establishment. Data connectivity, network authentication, and IP telephony may be affected where these services use the migrated ports. The affected user/device count and expected interruption duration will be confirmed before implementation.
+
+Key risks include incorrect port mapping, configuration differences between platforms, uplink or spanning-tree issues, and authentication or voice-service failures.
+
+Mitigations include configuration review, baseline capture, labelled cables, controlled migration, validation before continuing, and retention of the original switch for rollback. Work will take place during the approved out-of-hours window to reduce business disruption.
+
+If instability affects services beyond the intended scope, migration will stop immediately while Network Engineering assesses recovery or rollback.
+
+Backout plan
+
+Rollback triggers:
+- A service-affecting issue remains unresolved for two hours.
+- Critical connectivity, authentication, or applicable voice-service checks fail and cannot be restored within the available implementation period.
+- Network instability affects services outside the planned scope.
+- The latest rollback start time is reached without meeting acceptance criteria.
+
+Estimated rollback duration: Up to four hours, including verification.
+
+1. Stop further migration and notify the change coordinator, Local IT, and affected stakeholders.
+2. Isolate the replacement Cisco connections as required to prevent unintended parallel paths or network instability.
+3. Restore the original Juniper uplink arrangement and confirm the original configuration is available and active.
+4. Local IT/Remote Hands will return migrated cables to their original Juniper ports using the recorded port mapping.
+5. Verify uplink stability, VLAN connectivity, management access, endpoint authentication, and voice services where applicable.
+6. Confirm monitoring has resumed and obtain Local IT/service-owner confirmation that the original services are restored.
+7. Record the rollback outcome, supporting evidence, and follow-up actions in ServiceNow.
+
+Before implementation, verify the original switch remains operational and document the rollback readiness checks. Attach any available rollback rehearsal or previous execution evidence.
+
+Test plan
+
+Pre-change checks:
+- Verify configuration backups and cable/port mapping.
+- Record current device health, uplink status, interface errors, VLANs, and spanning-tree state.
+- Confirm baseline connectivity and applicable authentication and voice-service operation.
+- Validate the replacement hardware and prepared configuration.
+- Confirm monitoring access and the availability of representative test endpoints.
+
+Post-change checks:
+- Confirm the Cisco switch is reachable through the expected management path.
+- Verify uplinks and migrated access ports are operational, with no unexpected errors or repeated link transitions.
+- Confirm VLAN assignments and stable spanning-tree operation.
+- Validate endpoint IP addressing, default-gateway reachability, DNS resolution, and access to agreed business services.
+- Verify 802.1X/MAB authentication and IP phone registration/calling where applicable.
+- Confirm Zabbix receives fresh monitoring data and investigate any new change-related alerts.
+- Obtain Local IT/service-owner acceptance and attach timestamped results.
+
+Acceptance criteria:
+- All planned connections are migrated and accounted for.
+- Required connectivity, authentication, and applicable voice tests pass.
+- Uplinks remain stable during the agreed observation period.
+- Monitoring data is current.
+- No unresolved change-related service-impacting issues remain.
+- Test results and acceptance are recorded in the change.
+
+Previous successful changes provide supporting experience; they do not replace validation of this switch and its connected services.

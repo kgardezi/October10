@@ -1,0 +1,21 @@
+{
+  "name": "bang-board",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
+    "start": "vite --host 127.0.0.1 --port 5173 --strictPort --open",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 5173 --strictPort"
+  },
+  "dependencies": {
+    "@tldraw/assets": "5.4.2",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "tldraw": "5.4.2"
+  },
+  "devDependencies": {
+    "vite": "8.3.0"
+  }
+}

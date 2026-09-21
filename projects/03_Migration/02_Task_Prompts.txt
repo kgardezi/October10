@@ -1,3 +1,22 @@
-REFERENCE STAGE: Compare the attached matched reference Juniper and production Cisco configurations. Extract reusable conventions, exceptions and source coverage. Do not convert a target yet.
-TARGET STAGE: Convert TARGET_JUNIPER using the reference pair, approved standards and target hardware/port mapping. Account for all accessible target stanzas and identify any unread sections or unresolved translations.
-REVIEW: Check this draft against the source inventory and mapping. Return omissions, unintended changes and unresolved dependencies before revising it.
+MIGRATION — COPY ONE BLOCK ONLY
+Supply real configuration files, not these instructions as a substitute for evidence. File roles must be clear. Bracketed fields below are optional until needed; do not invent them.
+
+PROMPT 1 — LEARN THE REFERENCE PAIR
+Read REFERENCE_JUNIPER and its matching working REFERENCE_CISCO. Identify their visible source coverage and extract: the Cisco section sequence; applicable common configuration patterns; Juniper-to-Cisco feature mappings; site/device-specific fields that must be replaced; and unexplained differences needing review. Include interfaces, VLANs, STP, aggregation, authentication, AAA/RADIUS, management and ACL dependencies when present. Do not generate a target config yet. Do not describe the pair as permanent model training.
+REFERENCE_JUNIPER: [filename]
+REFERENCE_CISCO: [filename]
+
+PROMPT 2 — GENERATE THE TARGET CONFIGURATION
+Convert TARGET_JUNIPER to the actual target Catalyst 9300 stack using the matched reference Juniper/Cisco pair and target plan. Use REFERENCE_CISCO as the structural template: preserve section sequence, grouping, indentation, interface-block style and ! separators. Retain applicable approved Cisco patterns and their dependencies; replace device/site-specific values from the target source and explicit plan. Never blindly copy reference addresses, VLANs, port assignments, credentials or unrelated features.
+Inventory every target source area, resolve inherited settings where visible, respect inactive statements and use the supplied physical port mapping. Account for VLANs/interfaces/STP/LACP, dot1x/MAB, AAA/RADIUS/CoA, SNMP/NTP/SSH/VTY, ACLs/syslog, management/routing and additional detected features. Flag unsupported, unread and unresolved items instead of silently dropping them.
+Lead with brief status/blockers. Then return ONE continuous complete Cisco configuration code block in the working reference's flow. No explanatory headings inside, no separate topic blocks, no ellipses, no 'repeat' shortcuts. Put source-to-target coverage, unresolved values and verification notes after it. With unresolved values or incomplete coverage label INCOMPLETE — NOT DEPLOYABLE; never invent values to finish. If output cannot fit, provide a complete text file only if supported; otherwise explain the limitation before generating a truncated result.
+REFERENCE_JUNIPER: [filename]
+REFERENCE_CISCO: [filename]
+TARGET_JUNIPER: [filename]
+TARGET_PLAN / mapping / approved changes: [filename or text]
+
+PROMPT 3 — REPAIR A WRONG OR FRAGMENTED DRAFT
+Compare the generated draft against TARGET_JUNIPER, TARGET_PLAN and the working REFERENCE_CISCO. Find missing target features, wrong values, broken dependencies, copied reference-site values, incorrect port mapping, and deviations from the reference's order/continuous flow. Correct the evidence-supported issues and return the FULL corrected Cisco configuration in ONE continuous block, not separate patches. Keep explanations outside it. List remaining unresolved issues, source coverage and feature dispositions afterward. Do not call it deployable when values, compatibility or source coverage remain unverified.
+
+PROMPT 4 — REVIEW ONLY
+Audit this Cisco draft against the reference structure and target requirements. Return Severity | Source/target object | Deviation | Required correction. Check semantic coverage, object dependencies, port mapping, target-specific values and one-block reference order. Do not rewrite it yet. Treat unread portions as UNVERIFIED rather than missing configuration.

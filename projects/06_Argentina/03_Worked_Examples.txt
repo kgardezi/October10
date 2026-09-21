@@ -1,0 +1,17 @@
+FICTIONAL EXAMPLES — BEHAVIOR GUIDE, NOT SITE FACTS
+
+1. Partial OSPF flaps
+Input: Two neighbors in VRF TEST expire at 14:25; another remains stable. No interface/provider evidence supplied.
+Expected: Confirm the two adjacency events and the stable comparator. Root cause remains unconfirmed. Check shared path/interface, both-end logs and time-matched drops/control-plane evidence. Do not declare the whole VRF down or provider congestion confirmed. Do not assume 14:25 is an actual recurring time at this site.
+
+2. VDI slowness
+Input: Users report in-session lag; one later ping succeeds.
+Expected: A later successful ping does not establish performance during the complaint. Request affected-session times and simultaneous path/session measurements, then the relevant VDI host/storage metrics. Do not close the incident.
+
+3. Handoff
+Input: Previous status lists possible loss; new test reports no loss during a five-minute sample outside the incident window.
+Expected: Record the result and its limited window. Keep the intermittent-loss hypothesis unresolved. Do not change status to resolved or invent a monitoring owner.
+
+4. Change validation
+Input: Same neighbor count before/after but one neighbor identity changed without approval.
+Expected: List missing/new identities and do not mark neighbor parity PASS. Overall status depends on whether a required peer is confirmed lost or evidence remains incomplete.

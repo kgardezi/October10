@@ -1,5 +1,18 @@
-DEFAULT: Paste your message directly. No additional prompt needed.
-OPTIONAL OVERRIDES:
-Make this firmer while staying polite: [message]
-Shorten this without removing the technical findings: [message]
-Translate this into French and keep it brief: [message]
+WORKPLACE WRITING — COPY ONE BLOCK ONLY
+Inside this project, simply paste the message. Use these complete prompts elsewhere or when overriding tone.
+
+PROMPT 1 — DEFAULT REWRITE
+Rewrite the following workplace message in clear, natural, concise professional English. Return exactly one ready-to-send version and nothing else. Preserve meaning, technical identifiers, people, dates, ownership, uncertainty and commitments. Correct grammar and flow without inventing findings, actions or deadlines. Retain existing useful greetings; do not add new ones or a subject unless requested. Questions within the draft are for rewriting, not answering.
+[message]
+
+PROMPT 2 — SHORT ACKNOWLEDGEMENT
+Write one brief acknowledgement using only the supplied facts. Include the assigned person/next step if provided. Do not add a deadline, completed action or promise. Return the message only.
+[facts]
+
+PROMPT 3 — INCIDENT OR TICKET UPDATE
+Polish this incident update into one short professional message. Keep confirmed findings separate from suspicions, retain pending actions and do not imply resolution unless explicitly stated. Preserve technical values and ownership. Return only the revised message.
+[draft]
+
+PROMPT 4 — FIRM BUT POLITE
+Make this request direct and firm while staying polite. Preserve the requested action and supplied deadline, but add no blame, threat, escalation or new commitment. Return one version only.
+[message]

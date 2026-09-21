@@ -1,0 +1,10 @@
+FICTIONAL ORGANIZATION CHECKS
+
+Input contains the same circuit fact twice, two different VLAN assignments and a multiline command block.
+Expected: Merge the identical circuit fact while retaining both sources; retain both conflicting VLAN values with source/date; preserve the command block exactly. Return organized content, not merely suggested folder names.
+
+Input has no site or verification date.
+Expected: Unassigned scope, NEEDS REVIEW, last verified UNKNOWN. Do not invent metadata to fill the format.
+
+Input ends halfway through a procedure.
+Expected: Preserve the visible steps and identify the procedure as incomplete. Do not invent the remaining steps; record an exact continuation point.

@@ -1,23 +1,6 @@
-CISCO REFERENCE STRUCTURE AND OUTPUT
+CISCO REFERENCE STRUCTURE AND OUTPUT — v2
+These requirements are already included in 01_Project_Instructions.txt. This file is a standalone reminder for older projects; do not append duplicate copies to v2.
 
-Use the attached working Cisco Catalyst 9300 configuration as the structural template for the generated target configuration.
-
-Preserve its section sequence, grouping, indentation, interface-block style, and “!” separators. Do not reorganize the configuration into your own topic order.
-
-Use the matched reference Juniper/Cisco pair to identify how source features were implemented. Preserve applicable approved Cisco patterns, while taking target-specific values from the target Juniper configuration and supplied target hardware/port mapping.
-
-Do not blindly copy reference-site hostnames, addresses, VLANs, interfaces, credentials, or other device-specific settings. Do not assume every line in a working reference applies to the target.
-
-Return the target configuration in ONE continuous code block, following the reference’s flow from beginning to end. Do not split it into separate blocks for VLANs, interfaces, AAA, routing, or management.
-
-Keep explanations, headings, migration notes, and review items outside the configuration block. Do not use “same as above,” “repeat for remaining interfaces,” ellipses, or other omissions.
-
-Place target features absent from the reference in the appropriate related section and explain the addition outside the configuration block. Identify incompatible or inapplicable reference sections rather than silently copying them.
-
-Before presenting the result, verify both:
-1. Structure: the applicable sections follow the Cisco reference order.
-2. Content: all target configuration areas are accounted for, with unresolved items identified.
-
-If the complete Cisco reference or target configuration is not accessible, identify the missing content. Do not invent its layout or claim the output is complete.
-
-If unresolved values remain, label the output DRAFT — NOT DEPLOYABLE outside the code block. If the full configuration exceeds the response limit, provide a complete text file when supported; otherwise explain the limit rather than silently truncating it.
+Use the working REFERENCE_CISCO as the structural template. Preserve actual section sequence, grouping, indentation, interface style and ! separators. Derive target behavior and site/device-specific values from TARGET_JUNIPER and explicit TARGET_PLAN changes. Retain applicable approved reference patterns with their dependencies, not unrelated reference services or identities.
+Return ONE continuous complete configuration code block. No topic headings or explanation inside, no ellipses, no omitted interface repetitions, no 'same as reference'. Omit show-command banners; do not add execution wrappers unless requested. Put target features absent from the reference beside related configuration and document those additions afterward.
+Check both reference-order fidelity and target-feature coverage before returning. Missing source sections remain UNVERIFIED. Unresolved values require INCOMPLETE — NOT DEPLOYABLE outside the block and a complete unresolved-item list. Never invent values or portable credential conversions. Provide a complete text file only when supported; disclose an output limit rather than silently truncating.

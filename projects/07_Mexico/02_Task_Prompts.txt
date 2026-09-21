@@ -1,4 +1,19 @@
-DEFAULT: Paste site evidence or describe the issue.
-INVESTIGATE: Analyze [symptom] during [time/timezone] using the current site references and attached logs. Separate confirmed findings from hypotheses and list the next useful checks.
-UPGRADE: Apply Validation_Workflow to the attached labelled PRE/POST captures. End with the comparison table and identify coverage gaps.
-HANDOFF: Draft an updated Current_Status file from verified findings in this chat. Preserve open questions and include source references, dates and next actions. Do not invent owners or deadlines.
+MEXICO
+SITE OPERATIONS — COPY ONE BLOCK ONLY
+
+PROMPT 1 — INVESTIGATE OSPF FLAPS
+Analyze the attached OSPF and related evidence for this site. Use accessible dated topology/configuration/current-status references and separate historical findings from today's observations. Correlate device, VRF, neighbor, interface, down reason and recovery across both ends after checking timestamps/timezones. Compare unaffected neighbors. Distinguish physical/LACP/BFD/transport events, missed hellos, control-plane conditions and adjacency negotiation using the actual evidence. Do not assume provider loss or recurring congestion is the cause. Return the strongest assessment, decisive events, up to three evidence-linked hypotheses and the next two to five discriminating checks with location and interpretation. Analyze partial evidence now and identify only essential gaps.
+Time window/timezone: [if known]
+Evidence: [attach/paste]
+
+PROMPT 2 — INVESTIGATE SLOWNESS / VDI
+Analyze this site's reported slowness using the supplied users, destination and time window. Distinguish login, in-session and application symptoms. Compare affected and unaffected users/paths and time-matched network measurements. Separate network evidence from endpoint, VDI host/session, storage and application evidence. Do not clear the network from one ping or blame VDI without evidence. Return findings, remaining hypotheses and focused network/VDI checks for the same time window, including what each result would establish. Keep the request concise and usable by the receiving team.
+
+PROMPT 3 — SITE UPGRADE / RELOAD CHECKOUT
+Compare labelled PRE and POST for this site by exact device/interface/MAC-VLAN-port/neighbor/service identities, using approved changes and replacement mapping. Include applicable trunks, STP, aggregates, stack/vPC, routing and ASR920 VC/attachment-circuit states. Report exact missing/new/moved items even when counts match. Return overall status and coverage, then Check | PRE | POST | Difference / IDs | Status. Confirmed regression means FAIL; otherwise missing required evidence means INCOMPLETE; otherwise verified nonblocking concerns mean PASS WITH WARNINGS; otherwise PASS for the stated scope. Never turn missing output into zero or PASS. Keep the routine report short.
+
+PROMPT 4 — HANDOFF / CURRENT STATUS
+Draft the replacement Current_Status content from the existing supplied summary and verified new findings in this chat. Preserve unresolved questions, completed tests, dated source references and decisions. Separate confirmed facts from hypotheses; identify any conclusion superseded and why. Include next actions, owners and dates only when supplied. List material source gaps. Return copy-ready status text, without claiming to update project files or read unavailable chats.
+
+PROMPT 5 — PROVIDER / VDI ESCALATION
+Draft a short escalation using this investigation's verified findings: affected service/path, supplied identifiers, time window/timezone, observed events and completed checks. Request the specific additional evidence needed to distinguish remaining causes. Preserve uncertainty and do not assign blame, invent results or promise deadlines. Return the message only.

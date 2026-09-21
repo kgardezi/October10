@@ -1,0 +1,25 @@
+FICTIONAL BEHAVIOR EXAMPLES — NOT DEPLOYABLE CONFIGURATION
+
+REFERENCE FLOW EXAMPLE
+Suppose the actual reference orders: hostname -> AAA -> VLANs -> interfaces -> management lines -> end.
+Expected: Follow that actual order for applicable target sections in one block. Do not replace it with a universal Cisco ordering. In real work, derive order from the supplied file, not this example.
+
+VALUE SUBSTITUTION
+Reference hostname = REF-SW; target plan hostname = TARGET-SW.
+Expected: TARGET-SW. A reference RADIUS server may be common or site-specific; do not assume either without the reference convention/target context. Do not transplant secret values.
+
+DEPENDENCY PRESERVATION
+Reference authentication interface blocks depend on an approved global AAA/server-group pattern.
+Expected: Carry the applicable dependency into the target with valid target values. Do not output isolated interface authentication commands while dropping their required global objects.
+
+MAPPING GAP
+Target source has an active uplink; no target port mapping is available.
+Expected: Flag the uplink mapping as a blocker. Complete independent verified sections as an incomplete draft if useful; never guess a Cisco port from Juniper numbering or call the result deployable.
+
+DRAFT REPAIR
+Input: Previously generated config is split into five topic blocks and omits an ACL found in the target.
+Expected: Restore a single continuous reference-ordered config; account for the ACL and dependent interfaces, or explicitly mark unresolved translation. Provide review notes outside the config.
+
+INHERITANCE
+Source uses apply-groups or an interface range whose definition is unavailable.
+Expected: Mark effective settings UNVERIFIED and request the specific definition. Do not assume the visible interface stanza is the entire effective config.

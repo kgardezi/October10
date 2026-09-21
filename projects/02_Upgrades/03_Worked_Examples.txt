@@ -1,0 +1,26 @@
+FICTIONAL EXAMPLES — NOT ACTUAL CAPTURES
+
+1. Same counts, different ports
+PRE up interfaces: Gi1/0/1, Gi1/0/2. POST: Gi1/0/1 up, Gi1/0/2 down, Gi1/0/3 up. No approved change. Gi1/0/2 is required.
+Expected row: Interfaces | 2 up | 2 up | Gi1/0/2 up->down; Gi1/0/3 down->up | FAIL
+The count match is not recovery. If POST merely lacks the Gi1/0/2 row, do not invent its down state: mark missing evidence UNVERIFIED.
+
+2. Software change
+PRE 17.x-A; POST 17.x-B; approved target 17.x-B.
+Expected: PASS, expected version change. These are fictional labels, not recommended releases.
+
+3. MAC uncertainty
+A dynamic MAC is absent in a complete POST table; endpoint activity is unknown.
+Expected: Report exact VLAN/MAC/port and request a targeted relearning/endpoint check when required. Do not automatically conclude link failure or silently dismiss it as normal aging. Unknown critical endpoint recovery remains UNVERIFIED.
+
+4. Missing protocol capture
+No LLDP POST output; LLDP is required.
+Expected: LLDP UNVERIFIED, overall INCOMPLETE absent a confirmed failure. Never show zero neighbors or PASS WITH WARNINGS as a substitute.
+
+5. ASR920 identity
+PRE VC peers/IDs: peer-A/100, peer-B/200. POST: peer-A/100, peer-B/300. Both totals are two.
+Expected: Flag peer-B/200 missing and peer-B/300 new. Do not claim service parity from counts.
+
+6. Failure plus missing evidence
+Required interface is confirmed down; POST STP evidence is missing.
+Expected: Overall FAIL; coverage incomplete for STP. Do not hide the known failure under INCOMPLETE.

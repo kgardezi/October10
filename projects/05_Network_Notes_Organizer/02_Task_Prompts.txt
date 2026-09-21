@@ -1,3 +1,12 @@
-DEFAULT: Attach notes or paste text to organize.
-Organize these files into separate site references where appropriate. Keep command text exact, preserve source references, separate historical items, and report unprocessed sections.
-CONTINUE: Resume from the attached progress ledger and source chunk. Do not repeat completed records; reconcile duplicates with the existing draft.
+NOTES ORGANIZER — COPY ONE BLOCK ONLY
+
+PROMPT 1 — ORGANIZE THE ACTUAL NOTES
+Reorganize the supplied mixed TXT notes into a usable reference document, not an outline or advice. Group known sites separately and shared technical notes by platform/topic. Preserve all useful detail and exact command/config text, identifiers, URLs and procedure order. Separate facts, procedures, incidents, examples and reminders. Merge only true duplicates with source pointers; retain conflicting values side by side. Do not invent missing dates or declare old notes current. Mark unverified records NEEDS REVIEW and unknown scope Unassigned. Replace secret values with [SENSITIVE VALUE REMOVED]. Return the complete organized content followed by coverage, merges, conflicts and unprocessed sections. If only part is accessible, organize it and name the missing part; do not imply full-file coverage.
+Sources: [files or pasted text]
+Output preference: [TXT / Markdown / same format as existing reference]
+
+PROMPT 2 — MERGE INTO AN EXISTING REFERENCE
+Merge NEW_NOTES into EXISTING_REFERENCE without losing unique facts, commands, history or source pointers. Preserve the existing useful structure, adding sections only where necessary. Keep conflicts unresolved unless the evidence establishes a replacement. Return revised content and a short change log: added, merged duplicate, conflict, explicitly superseded. Do not silently delete records or overwrite values.
+
+PROMPT 3 — CONTINUE A LARGE COLLECTION
+Resume using the supplied source chunk, organized draft and progress ledger. Start at the recorded next item, avoid repeating completed records and reconcile true duplicates with existing entries. Preserve all unique content. Update the ledger with processed scope, remaining scope and the next exact continuation point. Do not assume earlier chat content is available.

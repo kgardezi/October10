@@ -1,43 +1,26 @@
-LLM@CIB PROJECT STARTER PACK - Version 1 - 2026-09-10
-Nine project folders; UTF-8 text files suitable for Notepad++.
-These are ready-to-copy instructions and editable reference templates, not populated device records. No CIB app or GitHub changes were made.
+LLM@CIB PROJECT PACK — v2 — 2026-09-21
 
-SETUP
-1. Create the corresponding project in LLM@CIB.
-2. Copy the CONTENT of 01_Project_Instructions.txt into the project's Instructions field. Do not merely attach it and expect it to become standing instructions.
-3. 02_Task_Prompts.txt contains optional short starters. Copy only the relevant starter into a chat or save it as a Favorite Prompt. Normal pasted input should work without one.
-4. Fill useful Reference_Templates with verified workplace facts, then attach those files in the project's Files section. UNKNOWN and TEMPLATE markers are intentional. Do not upload empty templates as factual knowledge.
-5. Attach temporary logs, target migration files and PRE/POST outputs to the relevant chat. Keep reusable references in project Files. Use one chat per incident, migration or change.
-6. Site Validation_Workflow.txt is a complete reusable workflow, ready to attach as a reference or load as a Favorite Prompt when validating inside a site project. It mirrors the Upgrades workflow; keep copies aligned if edited later.
-7. Update current-status files after meaningful progress by reviewing the model's draft and replacing the file manually if the app has no write capability. A summary does not replace raw evidence.
+INSTALL THE REVISION
+1. Open the relevant LLM@CIB project. REPLACE its old Instructions field with the full content of 01_Project_Instructions.txt. Attaching this file is not equivalent to setting project instructions. Do not append v2 below v1.
+2. Start a fresh chat for the first v2 trial so previous conflicting prompts or bad draft examples do not control the task. Keep useful actual evidence and reference configurations available.
+3. 02_Task_Prompts.txt contains complete selectable task blocks. Copy ONE prompt, not the whole menu, into the chat or a Favorite Prompt. These now repeat essential task/output rules so they are useful outside the project as well. Normal pasted input inside the project should still trigger the default task.
+4. Reference_Templates are optional forms for facts, not required homework. Fill only relevant fields with verified information. Attach actual reference configurations and evidence; do not upload empty forms as factual knowledge. Start using each project with the evidence you already have.
+5. Worked_Examples are fictional behavior demonstrations and local acceptance cases. Never treat their values as live site facts. Core instructions are self-contained; uploading examples is optional.
+6. Migration now includes the continuous Cisco reference format in the MAIN instructions and generation/repair prompts. The separate structure file is only a standalone reminder; do not append it again.
+7. Use one chat per investigation/change/migration. Maintain site continuity with a reviewed Current_Status file. Ask for HANDOFF, review the proposed text and replace the project file if the app cannot save it itself.
 
-PROJECTS
-01 Daily Network Analysis
-02 Upgrades
-03 Migration
-04 Workplace Writing
-05 Network Notes Organizer
-06 Argentina
-07 Mexico
-08 Colombia
-09 Brazil
+PROJECTS / MINIMUM INPUT
+01 Daily Network Analysis: paste logs, show output, config or a question. Environment overview/standards help but are not mandatory.
+02 Upgrades: actual labelled PRE and POST, known expected changes and required checks. OLD/NEW mapping for replacement. Short output still compares exact objects.
+03 Migration: matched reference Juniper/Cisco pair + target Juniper + actual target hardware/port plan. Full configuration generation needs full source coverage; stage reference analysis first if useful.
+04 Workplace Writing: paste the rough message. No reference file needed.
+05 Network Notes Organizer: paste/attach actual notes. Add an existing reference or progress ledger only for merge/continuation work.
+06 Argentina / 07 Mexico / 08 Colombia / 09 Brazil: current incident evidence; add dated topology/circuit/configuration/status knowledge as available. Essential troubleshooting and validation rules are included directly.
 
-MINIMUM USEFUL REFERENCES
-Daily analysis: environment overview; approved standards if available.
-Upgrades: change scope/required checks plus actual labelled PRE and POST evidence.
-Migration: matched reference pair; target config; actual target hardware/port mapping; approved conventions.
-Writing: none required.
-Notes organizer: source TXT files; progress ledger for large collections.
-Sites: overview/topology, current-status summary, dated configurations; circuits where relevant.
-Add approved vendor/version-specific runbooks where needed. No unverified command lists or invented site configurations are included.
+MODELS / INPUTS
+Use the text engineering model you already selected (GPT-OSS) as the starting point. These prompts do not assume a special model version, context limit, execution tool or reasoning setting. Use a model/input route documented by your app for screenshots; verify extracted values. Writing and notes prompts can be tried with your Mistral or Gemma options using the same acceptance cases.
+RAG may supply excerpts rather than full files. A stronger prompt cannot manufacture omitted evidence. If a comparison/conversion is incomplete, provide the missing named section, a smaller complete text input, or use an available parser. Never accept a whole-file completion claim just because a table looks finished.
+Do not assume cross-chat history access, automatic file updates or that moving chats to projects hides the global chat list. No upload-count or instruction-field limit is assumed by this pack. If the app rejects the instruction length, record its actual limit before making a shorter variant; do not truncate silently.
 
-INPUT AND MODEL NOTES
-Use GPT OSS for text-based engineering analysis. For an image, select a model with supported image input such as the Gemma or Mistral option documented by your app; verify extracted identifiers. A file icon does not prove all image/PDF content is accessible. The prompts do not depend on a particular model or reasoning toggle.
-Your RAG pipeline may retrieve selected passages. Instructions cannot force unavailable whole-file access. Ask for coverage and missing sections; use a parser for large exact comparisons where available.
-Project instructions, chat requests and files are complementary context. App-level precedence, cross-chat memory and global-sidebar behavior are not verified by this pack.
-
-REFERENCE HYGIENE
-Use dated names: DEVICE_config_YYYY-MM-DD.txt; DEVICE_PRE_YYYY-MM-DD.txt; DEVICE_POST_YYYY-MM-DD.txt. Include capture time/timezone inside files. Mark superseded snapshots. Never copy secret values into reference templates.
-
-FIRST CHECK
-Try one familiar resolved incident, one known PRE/POST difference, one migration excerpt and one rough message. Confirm source coverage, exact changed items, no invented details and the desired concise output before expanding use. These prompts have been reviewed for consistency here, but not executed in your CIB deployment.
+TRY V2
+Use Worked_Examples for small checks, then compare old/new behavior on a familiar sanitized real case with known expected results. See PROMPT_REVIEW_v2.md and ACCEPTANCE_CHECKS.md. The revision has been checked for content consistency, but has NOT been run in your LLM@CIB deployment. Preserve failed input/output pairs so the next revision can target observed errors.

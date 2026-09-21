@@ -1,0 +1,13 @@
+FICTIONAL WRITING CHECKS
+
+Draft: 'received imad will work on it'
+Expected: 'Received, thank you. Imad will work on it.'
+Do not add a deadline, explanation or second version.
+
+Draft: 'we are checking no root cause yet'
+Expected: 'We’re investigating, but the root cause has not been identified yet.'
+Do not say the issue is resolved.
+
+Draft: 'can you confirm if circuit stable now'
+Expected: 'Could you confirm whether the circuit is stable now?'
+Do not answer the question as a troubleshooting request.

@@ -1,5 +1,17 @@
-DEFAULT: Attach clearly labelled PRE files, then POST files in the same chat.
-PRE capture: [device], [date/time/timezone], intended change [description], target version [value or unknown]. More PRE files to follow: [yes/no].
-POST capture: [device], [date/time/timezone]. Compare with the available PRE baseline and finish with the comparison table.
-REPLACEMENT: Compare OLD and NEW evidence using the attached approved port mapping. Identify unmapped ports rather than guessing.
-SITE USE: These validation instructions can be copied into a Favorite Prompt used inside a site project; retain the site evidence in that one chat.
+UPGRADE VALIDATION — COPY ONE BLOCK ONLY
+
+PROMPT 1 — CAPTURE PRE BASELINE
+Use these files as PRE evidence for the identified device/change. Inventory available commands, capture times, interface/MAC/neighbor identities, relevant configured services and pre-existing issues. Do not generate a POST result yet. Identify only essential gaps and the matching POST captures needed. Do not promise storage outside this chat.
+Device/change: [if known]
+Target version and approved differences: [if known]
+More PRE files coming: [yes/no]
+
+PROMPT 2 — COMPARE PRE AND POST (SHORT REPORT, EXACT COMPARISON)
+Compare the labelled PRE and POST evidence by device, phase and timestamp. Give a concise operational checkout, matching actual interface IDs, VLAN/MAC/port tuples, CDP/LLDP neighbor identities and ports, aggregate members, routing peers and applicable services—not just counts. List exact missing, new, moved or changed items. Distinguish approved changes, pre-existing issues, dynamic MAC uncertainty and unverified evidence. Include configured ASR920 attachment circuits and pseudowires keyed by peer/VC ID when present. Do not treat a count match as parity or missing output as zero.
+Start with overall status and coverage. Finish with Check | PRE | POST | Difference / affected IDs | Status. Cover identity/version, interfaces, MACs, CDP, LLDP, trunks/VLANs, STP, aggregates, stack/vPC, routing, ASR920 services, PoE and hardware/logs as applicable. Use row PASS/WARN/FAIL/UNVERIFIED/N/A. Overall: confirmed failure -> FAIL; otherwise missing required evidence -> INCOMPLETE; otherwise verified warnings -> PASS WITH WARNINGS; otherwise PASS for the stated scope. Give only the next checks needed for exceptions. Do not expand into a full troubleshooting report unless needed.
+
+PROMPT 3 — HARDWARE REPLACEMENT
+Apply the same exact PRE/POST comparison to OLD and NEW devices using the supplied old-to-new device/port mapping. Preserve endpoint/neighbor/service identity across renumbering. Do not infer mapping from port order. Use LLDP for Juniper-to-Cisco neighbor parity; CDP is not expected on the old Juniper. Unmapped critical paths remain UNVERIFIED. Report expected model/version changes separately from regressions and finish with the comparison table.
+
+PROMPT 4 — COMPLETE INVESTIGATION
+Expand validation for the reported exceptions. Trace config and runtime dependencies for each changed interface, neighbor or service; correlate logs and timestamps. Retain the concise final comparison table. Distinguish verified regressions from coverage gaps and propose a focused recovery/rollback plan only where supported.

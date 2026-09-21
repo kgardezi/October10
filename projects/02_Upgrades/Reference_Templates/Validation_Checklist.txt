@@ -1,10 +1,20 @@
-VALIDATION CHECKLIST - SELECT APPLICABLE AREAS BEFORE THE CHANGE
-This is an evidence checklist, not a verified vendor command list.
-All: identity/version/uptime; interfaces; MACs by port/VLAN; CDP; LLDP; trunks/VLANs; STP; port-channels; errors/logs; hardware.
-Catalyst where present: stack member/link health; PoE/power.
-Nexus where present: vPC peer/member consistency; modules; configured overlay or routing services.
-ASR920 where present: L2 VC/pseudowire/xconnect identity and state; attachment circuits/service instances/bridge domains; relevant MPLS transport and routing peers.
-Mark each Required / Optional / N/A, state expected condition, and link the PRE and POST evidence. Confirm actual supported commands against platform/release or approved local runbooks.
-Summary table columns: Check | PRE/OLD | POST/NEW | Difference | Status.
-Exact exception detail: Item ID | PRE | POST | Expected change? | Finding.
-A full-looking table is not proof of full source coverage.
+VALIDATION SCOPE — fill only what is applicable; this is not a command syntax guide.
+Check | Required / Optional / N/A / Unknown | Expected state/change | PRE source/time | POST source/time | Critical object IDs
+Identity/software
+Interfaces
+MAC learning by VLAN and interface
+CDP identities and ports
+LLDP identities and ports
+Trunks/VLANs
+STP
+Port-channel members
+Stack/vPC
+Routing peers/VRFs
+ASR920 attachment circuits, pseudowires (peer/VC ID), transport
+PoE
+Hardware/errors/logs
+
+Default core: identity/software, operational interfaces, L2 MAC learning where relevant, enabled neighbor discovery. Add known configured dependencies and change-specific services. Unknown applicability is UNVERIFIED, not N/A. SHORT changes report length, not matching rigor.
+Summary: Check | PRE | POST | Difference / affected IDs | Status.
+Row status: PASS / WARN / FAIL / UNVERIFIED / N/A.
+Overall: confirmed failure -> FAIL; otherwise required evidence missing -> INCOMPLETE; otherwise warnings -> PASS WITH WARNINGS; otherwise PASS within scope.

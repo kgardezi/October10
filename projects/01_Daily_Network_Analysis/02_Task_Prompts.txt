@@ -1,5 +1,15 @@
-DEFAULT: Paste output or describe the issue; no starter prompt is required.
-OPTIONAL FOCUS:
-Analyze the attached evidence for [symptom]. Focus on [device/site/VRF/time window]. Give a concise assessment and only the next checks that would change the diagnosis.
-INTERNAL RESEARCH:
-Search available internal records for [issue/identifiers/time window]. Return relevant record IDs, dates, documented findings and unresolved questions. Do not update records.
+DAILY ANALYSIS — COPY ONE BLOCK ONLY
+These prompts are usable as Favorite Prompts. Project instructions still provide the default workflow. Replace bracketed fields only when known; then paste/attach evidence.
+
+PROMPT 1 — ANALYZE RAW EVIDENCE
+Analyze the following network logs, outputs or configuration as a senior network engineer. Identify device/platform, scope, time and the decisive observations. Start with the strongest supported assessment; distinguish confirmed facts from ranked hypotheses. Explain impact and correlate related events without assuming causation. Give only the next two to five checks that would distinguish the remaining causes, including where to run them, platform-appropriate command/check, expected result and interpretation. Compare affected and unaffected paths when useful. Do not ask me to categorize the material. Do not invent missing output or diagnose a current fault from old cumulative counters. If a needed section is unavailable, analyze the rest and request that specific section.
+Evidence/context: [paste or attach]
+
+PROMPT 2 — REVIEW A CONFIGURATION
+Review this configuration for [reported symptom or intended behavior]. Trace the relevant interface/VLAN/VRF/neighbor/policy dependencies. Separate confirmed errors, deviations from supplied standards, and reasonable design choices. Cite the exact supporting section. Preserve intended behavior and propose the smallest correction only where supported, with impact, rollback and verification. Keep unavailable sections UNVERIFIED; do not generate a replacement config unless requested.
+
+PROMPT 3 — CONTINUE AN INVESTIGATION
+Compare this new evidence with the findings available in this chat. State what changed, which hypotheses gained or lost support, and the next decisive check. Do not repeat completed tests without a reason. If earlier evidence is unavailable, identify the minimum baseline needed.
+
+PROMPT 4 — INTERNAL RECORD RESEARCH
+Using available authorized internal search tools, find records relevant to [symptom/device/platform/time window]. Return record ID/link, date, matching conditions, documented cause/action and whether the case actually applies here. Separate documented findings from your inference. Do not update tickets. If tools are unavailable, say so and analyze supplied records instead.

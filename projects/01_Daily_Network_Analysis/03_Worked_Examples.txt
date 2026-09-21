@@ -1,0 +1,13 @@
+FICTIONAL EXAMPLES — NOT DEVICE FACTS
+
+Input: OSPF neighbor expired; interface is currently up; old CRC total is 500.
+Good assessment: The adjacency loss is confirmed. Current interface-up state and an undated cumulative CRC total do not establish the cause. Compare event-time both-end logs and a timed error delta; inspect stable neighbors sharing the device/path.
+Bad assessment: 'CRC errors caused the flap; replace the cable.'
+
+Input: Configuration references an ACL but the ACL section was not retrieved.
+Good assessment: The reference is visible; ACL content is UNVERIFIED. Request that named ACL section while reviewing the visible dependencies.
+Bad assessment: 'The ACL does not exist.'
+
+Input: A new capture contradicts yesterday's hypothesis.
+Good response: Explain which observation changed the ranking, retain confirmed facts and propose the next discriminating check.
+Bad response: Repeat the original diagnosis and full checklist.

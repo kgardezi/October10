@@ -4,7 +4,7 @@ Project instructions, task prompts and reference templates for a local LLM works
 
 ## Start here
 
-Read [setup instructions](projects/START_HERE.txt). Copy each project's `01_Project_Instructions.txt` into its Instructions field; task starters are in `02_Task_Prompts.txt`. Fill reference templates with verified facts before using them.
+Read [setup instructions](projects/START_HERE.txt). Copy each project's `01_Project_Instructions.txt` into its Instructions field; complete selectable task prompts are in `02_Task_Prompts.txt`. Fill reference templates with verified facts before using them.
 
 ## Projects
 
@@ -21,6 +21,8 @@ Read [setup instructions](projects/START_HERE.txt). Copy each project's `01_Proj
 ## Conversation additions
 
 - [14 👉 notes](notes/Conversation_Arrow_Notes.md)
-- [Cisco reference structure and output](projects/03_Migration/03_Cisco_Reference_Structure_and_Output.txt): append this supplement to the Migration project instructions to require the working Cisco reference's continuous configuration flow.
+- [Cisco reference structure and output](projects/03_Migration/03_Cisco_Reference_Structure_and_Output.txt): these rules are now built into the main Migration instructions; the separate file is a standalone reminder.
 
-The original starter-pack text is retained. References are templates, not live device records. Prompt behavior has not been validated in the workplace deployment. The original setup file describes the initial pack; the migration supplement above is the later addition.
+Version 2 replaces the starter instructions with explicit workflows, complete task prompts and fictional worked examples. References remain templates, not live device records. Replace old project instructions rather than appending both versions.
+
+Read the [review and changes](projects/PROMPT_REVIEW_v2.md) and [acceptance checks](projects/ACCEPTANCE_CHECKS.md). The prompts have not yet been tested in the workplace deployment.

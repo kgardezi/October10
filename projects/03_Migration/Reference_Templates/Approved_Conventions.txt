@@ -1,11 +1,14 @@
-STATUS: TEMPLATE - NOT VERIFIED SITE DATA
-Fill only confirmed facts. Leave unknowns as UNKNOWN. Replace this header with DRAFT or VERIFIED and a verification date when appropriate.
-Source/owner: UNKNOWN
-Last verified: UNKNOWN
+STATUS: TEMPLATE — fill from the actual matched reference pair; not a site configuration.
+REFERENCE_JUNIPER filename/device/date:
+REFERENCE_CISCO filename/device/date:
+Evidence that the pair belongs to the same migration:
+Actual Cisco section sequence (in observed order):
+Area | Juniper source object/pattern | Cisco reference block | Reuse/adapt/omit | Approved or inferred | Target substitutions | Dependencies | Source
 
-MIGRATION CONVENTIONS
-Reference pair filenames and matching device/cutover evidence: UNKNOWN
-Area | Observed Juniper pattern | Observed Cisco pattern | Proposed reusable rule | Approved/inferred | Exceptions/source
-UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | INFERRED | UNKNOWN
-Approval/date: UNKNOWN
-Absence from a reference is not approval to omit a target feature.
+Classify reference values:
+- Explicitly approved common settings:
+- Site/device-specific settings requiring substitution:
+- Version/hardware-specific settings:
+- Unexplained differences / decisions needed:
+Approval source/date, if supplied:
+Do not include secret values. An absent feature in one reference is not approval to drop it from the target.

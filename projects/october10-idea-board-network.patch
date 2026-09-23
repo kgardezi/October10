@@ -1,0 +1,2023 @@
+From 43d790261d34f76c97787146380d4054e4786433 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 23 Sep 2026 08:23:20 -0400
+Subject: [PATCH] Add Idea Board network edition (self-hosted network diagram
+ app)
+
+Single-file offline whiteboard for network diagrams: device library,
+bound links with SMF/MMF/WAN/port-channel types and port labels,
+numbered and named pages, hand-drawn shapes, alignment guides,
+PNG/SVG export. Includes Dockerfile, nginx.conf and docker-compose.yml.
+The earlier projects/Idea_Board app is left unchanged.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Xgvk4nx454wXULYJPrA1z9
+---
+ README.md                                     |    4 +
+ projects/Idea_Board_Network/Dockerfile        |    5 +
+ projects/Idea_Board_Network/README.md         |   66 +
+ .../Idea_Board_Network/docker-compose.yml     |    7 +
+ projects/Idea_Board_Network/index.html        | 1849 +++++++++++++++++
+ projects/Idea_Board_Network/nginx.conf        |   20 +
+ 6 files changed, 1951 insertions(+)
+ create mode 100644 projects/Idea_Board_Network/Dockerfile
+ create mode 100644 projects/Idea_Board_Network/README.md
+ create mode 100644 projects/Idea_Board_Network/docker-compose.yml
+ create mode 100644 projects/Idea_Board_Network/index.html
+ create mode 100644 projects/Idea_Board_Network/nginx.conf
+
+diff --git a/README.md b/README.md
+index 5971c20..2233a97 100644
+--- a/README.md
++++ b/README.md
+@@ -18,6 +18,10 @@ Read [setup instructions](projects/START_HERE.txt). Copy each project's `01_Proj
+ 8. [Colombia](projects/08_Colombia)
+ 9. [Brazil](projects/09_Brazil)
+ 
++## Apps
++
++- [Idea Board (network edition)](projects/Idea_Board_Network): self-hosted whiteboard for network diagrams, with device library, links that stay attached to devices, fibre/WAN link types, pages and PNG/SVG export. One offline file; Docker setup included.
++
+ ## Conversation additions
+ 
+ - [14 👉 notes](notes/Conversation_Arrow_Notes.md)
+diff --git a/projects/Idea_Board_Network/Dockerfile b/projects/Idea_Board_Network/Dockerfile
+new file mode 100644
+index 0000000..fb289b8
+--- /dev/null
++++ b/projects/Idea_Board_Network/Dockerfile
+@@ -0,0 +1,5 @@
++FROM nginx:1.27-alpine
++COPY nginx.conf /etc/nginx/conf.d/default.conf
++COPY index.html /usr/share/nginx/html/index.html
++EXPOSE 8080
++HEALTHCHECK CMD wget -qO- http://127.0.0.1:8080/ >/dev/null || exit 1
+diff --git a/projects/Idea_Board_Network/README.md b/projects/Idea_Board_Network/README.md
+new file mode 100644
+index 0000000..0cc7757
+--- /dev/null
++++ b/projects/Idea_Board_Network/README.md
+@@ -0,0 +1,66 @@
++# Idea Board
++
++A self-hosted whiteboard for network diagrams — routers, switches, firewalls, WAN
++circuits and the links between them. It feels like tldraw (infinite canvas, bottom
++toolbar, floating style panel) and has network-specific parts built in.
++
++One file (`index.html`) with no dependencies, no build step and no calls to outside
++services. It runs offline and works on an air-gapped server.
++
++## Run it
++
++**Docker (recommended)**
++
++```bash
++docker compose up -d --build
++# open http://<server>:8080
++```
++
++**Any web server** — copy `index.html` into a web root (nginx, Apache, IIS, Caddy).
++
++**Quick test** — `python3 -m http.server 8080` in this folder, or just open `index.html`
++in a browser.
++
++To put it behind an existing nginx reverse proxy at a sub-path:
++
++```nginx
++location /ideaboard/ { proxy_pass http://127.0.0.1:8080/; }
++```
++
++## Features
++
++- Infinite canvas: pan (wheel, Space-drag, H), zoom (Ctrl + wheel, pinch), dot grid, snap to grid
++- Network library: router, L3 switch, switch, firewall, load balancer, server, ISE/NAC,
++  AP, WLC, NTE/CPE, endpoint, IP phone; Internet / MPLS / cloud; zones (site frames)
++- **Links bind to devices** and follow them when you move them. They can be straight,
++  curved (drag the middle handle) or elbow.
++- Link types: Ethernet, single-mode fibre (yellow), multimode fibre (orange), 802.1Q trunk, port-channel/vPC, WAN circuit, VPN, OOB management
++- Link label (e.g. `CCT-10023 · 1G`) plus **A-end and B-end port labels** (e.g. `Te1/1/1`, `Eth1/49`)
++- Device hostname, a free-text info block (mgmt IP, model, code version), and a
++  **role badge** (CL / DL / AG / ML / AS / WAN / DMZ)
++- Zones act like frames: moving a zone moves the devices inside it
++- Hand-drawn (tldraw-style) or clean outlines for shapes; pencil with smooth, pressure-sensitive strokes (P); eraser (E); arrows
++- Pages: several pages per board, each numbered with an optional unique name (e.g. "Page 1 · Mexico", "Page 2 · Cisco"). Use the page menu next to the board name; PageUp / PageDown switch pages
++- Alignment guides that snap edges and centres to other shapes (hold Ctrl to skip); tool lock (Q)
++- Align, distribute, duplicate (Ctrl D or Alt-drag), copy/paste between tabs, undo/redo
++- Autosaves in the browser; save and open `.ideaboard.json` files; export PNG or SVG
++  (exports only the selection when something is selected)
++- Light and dark themes
++
++Press `?` in the app to see all shortcuts.
++
++## Where data lives
++
++The app autosaves each browser's board, with all its pages, in `localStorage` on that machine. Use **Menu → Save
++to file** to keep or share a board (the files are plain JSON and work well in git).
++Server-side storage and multi-user editing are possible next steps.
++
++## Customising
++
++Everything is in `index.html`:
++- `DEVICES` — add device types. Icons are SVG paths drawn on a 48×48 grid.
++- `LINKS` — link-type presets (colour, dash, width).
++- `ROLES` — role badge names and colours.
++- `COLORS` — the palette (light and dark values).
++
++Licence: MIT.
+diff --git a/projects/Idea_Board_Network/docker-compose.yml b/projects/Idea_Board_Network/docker-compose.yml
+new file mode 100644
+index 0000000..97b19aa
+--- /dev/null
++++ b/projects/Idea_Board_Network/docker-compose.yml
+@@ -0,0 +1,7 @@
++services:
++  idea-board:
++    build: .
++    container_name: idea-board
++    ports:
++      - "8080:8080"
++    restart: unless-stopped
+diff --git a/projects/Idea_Board_Network/index.html b/projects/Idea_Board_Network/index.html
+new file mode 100644
+index 0000000..08b3a56
+--- /dev/null
++++ b/projects/Idea_Board_Network/index.html
+@@ -0,0 +1,1849 @@
++<!doctype html>
++<html lang="en">
++<head>
++<meta charset="utf-8">
++<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
++<title>Idea Board</title>
++<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='12' fill='%231f6feb'/%3E%3Cpath d='M14 34h6v-6h-6zM28 34h6v-6h-6zM21 20h6v-6h-6zM17 28v-4h14v4M24 20v4' stroke='white' stroke-width='2.5' fill='none' stroke-linejoin='round'/%3E%3C/svg%3E">
++<style>
++:root{
++  --bg:#f7f7f8; --grid:#c9ccd3; --panel:#ffffff; --border:rgba(0,0,0,.07);
++  --shadow:0 0 0 1px rgba(0,0,0,.05),0 2px 4px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.08);
++  --text:#1d1d1f; --muted:#6b7280; --hover:#f0f1f3; --accent:#1f6feb; --accent-soft:#e7f0fe; --danger:#e03131;
++  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
++  color-scheme:light;
++}
++:root[data-theme="dark"]{
++  --bg:#101113; --grid:#34373e; --panel:#1c1d21; --border:rgba(255,255,255,.08);
++  --shadow:0 0 0 1px rgba(255,255,255,.06),0 8px 24px rgba(0,0,0,.5);
++  --text:#e8e8ea; --muted:#9ca3af; --hover:#2a2c31; --accent:#4d8ff5; --accent-soft:#1d2b42;
++  color-scheme:dark;
++}
++*{box-sizing:border-box}
++html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
++button{font:inherit;color:inherit}
++#canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none;display:block;user-select:none;-webkit-user-select:none}
++.panel{position:fixed;background:var(--panel);border-radius:12px;box-shadow:var(--shadow);z-index:10}
++.ibtn{width:36px;height:36px;border:0;background:transparent;border-radius:8px;display:inline-grid;place-items:center;cursor:pointer;color:var(--text);position:relative;flex:none}
++.ibtn:hover{background:var(--hover)}
++.ibtn.active{background:var(--accent);color:#fff}
++.ibtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
++.ibtn .kbd{position:absolute;right:3px;bottom:1px;font-size:8px;opacity:.55}
++.ibtn.active .kbd{opacity:.8}
++/* top-left */
++#topleft{top:10px;left:10px;display:flex;align-items:center;gap:2px;padding:4px}
++#boardName{border:0;background:transparent;font:600 14px var(--font);color:var(--text);padding:6px 8px;border-radius:8px;width:160px;outline:none}
++.pagebtn{display:flex;align-items:center;gap:4px;border:0;background:transparent;height:32px;padding:0 6px 0 8px;border-radius:8px;cursor:pointer;font:500 13px var(--font);color:var(--muted);max-width:230px}
++.pagebtn:hover,.pagebtn.open{background:var(--hover);color:var(--text)}
++.pagebtn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
++.pagebtn svg{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
++#pagesPanel{top:56px;left:10px;width:270px;padding:6px;display:none;z-index:30}
++#pagesPanel.open{display:block}
++.pp-head{display:flex;align-items:center;justify-content:space-between;padding:0 2px 4px 8px;font-weight:600;font-size:12px;color:var(--muted)}
++.pp-head .ibtn{width:30px;height:30px}
++.pp-item{display:flex;align-items:center;gap:4px;border-radius:7px;padding:0 4px 0 10px;height:34px;cursor:pointer}
++.pp-item:hover{background:var(--hover)}
++.pp-item.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
++.pp-num{font-size:11px;color:var(--muted);width:14px;font-variant-numeric:tabular-nums}
++.pp-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
++.pp-acts{display:none;gap:1px}
++.pp-item:hover .pp-acts,.pp-item.active .pp-acts{display:flex}
++.pp-acts button{border:0;background:none;width:24px;height:24px;border-radius:5px;cursor:pointer;display:grid;place-items:center;color:var(--muted)}
++.pp-acts button:hover{background:var(--panel);color:var(--text)}
++.pp-acts button.danger:hover{color:var(--danger)}
++.pp-acts svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
++.pp-input{flex:1;min-width:0;border:1px solid var(--accent);border-radius:5px;padding:4px 6px;font:13px var(--font);background:var(--panel);color:var(--text);outline:none}
++#boardName:hover,#boardName:focus{background:var(--hover)}
++/* menu */
++#menu{top:56px;left:10px;padding:6px;min-width:240px;display:none}
++#menu.open{display:block}
++#menu button{display:flex;justify-content:space-between;width:100%;border:0;background:none;text-align:left;padding:8px 10px;border-radius:7px;cursor:pointer}
++#menu button:hover{background:var(--hover)}
++#menu button span:last-child{color:var(--muted);font-size:12px}
++#menu hr{border:0;border-top:1px solid var(--border);margin:5px 4px}
++/* toolbar */
++#toolbar{bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:2px;padding:5px;align-items:center;max-width:calc(100vw - 24px);overflow-x:auto}
++#toolbar .sep{width:1px;height:24px;background:var(--border);margin:0 4px;flex:none}
++/* bottom-left */
++#bottomleft{bottom:12px;left:10px;display:flex;align-items:center;gap:2px;padding:5px}
++#zoomPct{min-width:52px;height:36px;border:0;background:none;border-radius:8px;cursor:pointer;font-variant-numeric:tabular-nums}
++#zoomPct:hover{background:var(--hover)}
++/* library */
++#library{top:62px;left:10px;width:236px;max-height:calc(100vh - 140px);overflow:auto;padding:10px;display:none}
++#library.open{display:block}
++#library h4{margin:10px 4px 6px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
++#library h4:first-child{margin-top:2px}
++.libgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
++.libitem{border:0;background:none;border-radius:8px;padding:8px 2px 6px;cursor:grab;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;color:var(--text)}
++.libitem:hover{background:var(--hover)}
++.libitem.active{background:var(--accent-soft);outline:1.5px solid var(--accent)}
++.libitem svg{width:34px;height:34px}
++.linkrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:none;border-radius:8px;padding:7px 8px;cursor:pointer;font-size:12px}
++.linkrow:hover{background:var(--hover)}
++.linkrow.active{background:var(--accent-soft)}
++.linkrow svg{width:46px;height:12px;flex:none}
++/* style panel */
++#stylePanel{top:10px;right:10px;width:228px;padding:10px;max-height:calc(100vh - 20px);overflow:auto}
++#stylePanel:empty{display:none}
++.sp-sec{padding:6px 0;border-top:1px solid var(--border)}
++.sp-sec:first-child{border-top:0;padding-top:0}
++.sp-lbl{font-size:11px;color:var(--muted);margin:2px 2px 6px;font-weight:600}
++.swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:2px}
++.sw{height:30px;border:0;background:none;border-radius:7px;cursor:pointer;display:grid;place-items:center}
++.sw:hover{background:var(--hover)}
++.sw i{width:17px;height:17px;border-radius:50%;display:block}
++.sw.active{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent)}
++.seg{display:flex;gap:2px;background:var(--hover);border-radius:8px;padding:2px}
++.seg button{flex:1;border:0;background:none;border-radius:6px;height:28px;cursor:pointer;font-size:12px;display:grid;place-items:center;padding:0 4px}
++.seg button.active{background:var(--panel);box-shadow:0 1px 2px rgba(0,0,0,.15);color:var(--accent);font-weight:600}
++.seg svg{width:22px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
++.sp-row{display:flex;gap:6px;margin-top:6px}
++.field{width:100%;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:7px;padding:6px 8px;font:12px var(--font);outline:none;margin-bottom:6px;resize:vertical}
++.field:focus{border-color:var(--accent)}
++textarea.field{min-height:52px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px}
++.acts{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
++.acts button{border:0;background:none;height:30px;border-radius:7px;cursor:pointer;display:grid;place-items:center}
++.acts button:hover{background:var(--hover)}
++.acts button.danger:hover{background:rgba(224,49,49,.12);color:var(--danger)}
++.acts svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
++.presets{display:grid;grid-template-columns:1fr 1fr;gap:4px}
++.presets button{border:1px solid var(--border);background:none;border-radius:7px;padding:5px 6px;font-size:11px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:6px}
++.presets button:hover{background:var(--hover)}
++.presets button b{width:16px;height:0;border-top:3px solid;display:inline-block;flex:none}
++/* editor */
++.editor{position:absolute;z-index:20;border:0;outline:none;background:transparent;resize:none;overflow:hidden;padding:0;margin:0;font-family:var(--font);line-height:1.28;white-space:pre-wrap;word-wrap:break-word;caret-color:var(--accent)}
++.editor.pill{background:var(--panel);border-radius:4px;box-shadow:0 0 0 1.5px var(--accent)}
++/* toast / help */
++#toast{position:fixed;top:14px;left:50%;transform:translate(-50%,-80px);background:var(--text);color:var(--bg);padding:8px 14px;border-radius:8px;font-weight:500;transition:transform .2s;z-index:50;pointer-events:none}
++#toast.show{transform:translate(-50%,0)}
++#help{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:60;display:none;place-items:center;padding:16px}
++#help.open{display:grid}
++#help .card{background:var(--panel);border-radius:14px;box-shadow:var(--shadow);max-width:720px;width:100%;max-height:86vh;overflow:auto;padding:20px 24px}
++#help h2{margin:0 0 4px;font-size:18px}
++#help p{color:var(--muted);margin:0 0 14px}
++#help .cols{display:grid;grid-template-columns:1fr 1fr;gap:4px 28px}
++#help .k{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)}
++#help kbd{font:11px ui-monospace,Menlo,monospace;background:var(--hover);border-radius:4px;padding:2px 6px}
++#bottomleft.stacked{bottom:64px}
++body.stacked #library{max-height:calc(100vh - 210px)}
++@media (max-width:1180px){#toolbar [data-tool^="device:"],#toolbar .sep.devsep{display:none}}
++@media (max-width:700px){#help .cols{grid-template-columns:1fr}#stylePanel{width:200px}#boardName{width:120px}}
++</style>
++</head>
++<body>
++<svg id="canvas" xmlns="http://www.w3.org/2000/svg">
++  <defs>
++    <pattern id="dots" patternUnits="userSpaceOnUse" width="20" height="20"><circle id="dot" cx="1" cy="1" r="1" fill="var(--grid)"/></pattern>
++    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity=".18"/></filter>
++  </defs>
++  <rect id="gridbg" x="0" y="0" width="100%" height="100%" fill="url(#dots)"/>
++  <g id="world"></g>
++  <g id="ui"></g>
++</svg>
++<div id="editors"></div>
++
++<div id="topleft" class="panel">
++  <button class="ibtn" id="menuBtn" title="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
++  <input id="boardName" spellcheck="false" value="Untitled board" aria-label="Board name">
++  <button class="pagebtn" id="pageBtn" title="Pages (PageUp / PageDown to switch)"><span id="pageName">Page 1</span><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
++  <button class="ibtn" id="libBtn" title="Network library (Shift+L)"><svg viewBox="0 0 24 24"><path d="M9 3h6v5H9zM3 16h6v5H3zM15 16h6v5h-6zM12 8v4M6 16v-4h12v4"/></svg></button>
++</div>
++<div id="pagesPanel" class="panel"></div>
++<div id="menu" class="panel">
++  <button data-menu="new"><span>New board</span><span></span></button>
++  <button data-menu="open"><span>Open file…</span><span>Ctrl O</span></button>
++  <button data-menu="save"><span>Save to file</span><span>Ctrl S</span></button>
++  <hr>
++  <button data-menu="png"><span>Export PNG</span><span>Ctrl Shift E</span></button>
++  <button data-menu="svg"><span>Export SVG</span><span></span></button>
++  <hr>
++  <button data-menu="sample"><span>Insert sample topology</span><span></span></button>
++  <hr>
++  <button data-menu="grid"><span>Show grid</span><span id="mGrid"></span></button>
++  <button data-menu="snap"><span>Snap to grid</span><span id="mSnap"></span></button>
++  <button data-menu="guides"><span>Alignment guides</span><span id="mGuides"></span></button>
++  <button data-menu="theme"><span>Dark mode</span><span id="mTheme"></span></button>
++  <hr>
++  <button data-menu="help"><span>Keyboard shortcuts</span><span>?</span></button>
++</div>
++<div id="library" class="panel"></div>
++<div id="stylePanel" class="panel"></div>
++<div id="toolbar" class="panel"></div>
++<div id="bottomleft" class="panel">
++  <button class="ibtn" data-act="undo" title="Undo (Ctrl Z)"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
++  <button class="ibtn" data-act="redo" title="Redo (Ctrl Shift Z)"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
++  <span style="width:1px;height:22px;background:var(--border);margin:0 3px"></span>
++  <button class="ibtn" data-act="zoomout" title="Zoom out (-)"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
++  <button id="zoomPct" data-act="zoomreset" title="Reset zoom (Shift 0)">100%</button>
++  <button class="ibtn" data-act="zoomin" title="Zoom in (+)"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg></button>
++  <button class="ibtn" data-act="zoomfit" title="Zoom to fit (Shift 1)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
++</div>
++<div id="toast"></div>
++<div id="help"><div class="card">
++  <h2>Idea Board — shortcuts</h2>
++  <p>Draw network diagrams fast. Links snap to devices and follow them when moved.</p>
++  <div class="cols" id="helpCols"></div>
++</div></div>
++<input type="file" id="fileInput" accept=".json,.ideaboard,application/json" hidden>
++
++<script>
++"use strict";
++/* ============================================================
++   Idea Board — self-hosted whiteboard for network diagrams
++   Single file, no dependencies. MIT licence.
++   ============================================================ */
++const $ = s => document.querySelector(s);
++const FONT = 'system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
++const STORE_KEY = 'ideaboard:board:v1', PREF_KEY = 'ideaboard:prefs:v2';
++
++/* ---------- palette & style tokens ---------- */
++const COLORS = {
++  black:['#1d1d1d','#e6e6e6'], grey:['#868e96','#8f969f'], blue:['#1f6feb','#4d8ff5'], lightblue:['#1c9bd6','#4fb6ea'],
++  teal:['#0c8599','#22b8cf'], green:['#2b8a3e','#40c057'], lightgreen:['#5c940d','#94d82d'], yellow:['#e8a200','#fcc419'],
++  orange:['#e8590c','#ff922b'], red:['#e03131','#ff6b6b'], violet:['#7048e8','#9775fa'], pink:['#c2255c','#f06595']
++};
++const SIZES = {s:1.5, m:2.5, l:4, xl:7};
++const FONTS = {s:14, m:18, l:26, xl:36};
++const ROLES = {'':'', CL:'#c92a2a', DL:'#e8590c', AG:'#c29100', ML:'#7048e8', AS:'#2b8a3e', WAN:'#1f6feb', DMZ:'#495057'};
++const isDark = () => document.documentElement.dataset.theme === 'dark';
++const col = n => (COLORS[n] || COLORS.black)[isDark() ? 1 : 0];
++const PANEL = () => isDark() ? '#1c1d21' : '#ffffff';
++const BG = () => isDark() ? '#101113' : '#f7f7f8';
++const TEXT = () => isDark() ? '#e8e8ea' : '#1d1d1f';
++function mix(a, b, t){
++  const p = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16));
++  const A = p(a), B = p(b);
++  return '#' + A.map((v,i) => Math.round(v + (B[i]-v)*t).toString(16).padStart(2,'0')).join('');
++}
++const tint = n => isDark() ? mix(col(n), '#1c1d21', .7) : mix(col(n), '#ffffff', .84);
++const noteBg = n => isDark() ? mix(col(n), '#1c1d21', .45) : mix(col(n), '#ffffff', .55);
++const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
++const uid = () => Math.random().toString(36).slice(2, 10);
++const r2 = v => Math.round(v * 100) / 100;
++
++/* ---------- network device catalogue ---------- */
++const DEVICES = {
++  router:   {name:'Router',     color:'blue',  shape:'circle', icon:'M27 21 34 14M29 14h5v5M21 27l-7 7M14 29v5h5M14 14l7 7M16 21h5v-5M34 34l-7-7M27 32v-5h5'},
++  l3switch: {name:'L3 Switch',  color:'blue',  icon:'M24 21V9M20 13l4-4 4 4M24 27v12M20 35l4 4 4-4M21 24H9M13 20l-4 4 4 4M27 24h12M35 20l4 4-4 4'},
++  switch:   {name:'Switch',     color:'teal',  icon:'M11 19h24M30 14l5 5-5 5M37 29H13M18 24l-5 5 5 5'},
++  firewall: {name:'Firewall',   color:'red',   icon:'M9 12h30v24H9zM9 20h30M9 28h30M19 12v8M29 12v8M14 20v8M24 20v8M34 20v8M19 28v8M29 28v8'},
++  lb:       {name:'Load Bal.',  color:'violet',icon:'M8 24h10M18 24l17-10M18 24h17M18 24l17 10M30 11l5 3-3 5M31 20l4 4-4 4M32 29l3 5-5 2'},
++  server:   {name:'Server',     color:'grey',  icon:'M13 8h22v32H13zM13 18.7h22M13 29.3h22M17 13.3h7M17 24h7M17 34.6h7M30 13.3h.1M30 24h.1M30 34.6h.1'},
++  ise:      {name:'ISE / NAC',  color:'orange',icon:'M24 8l13 5v10c0 8-5.5 14-13 17-7.5-3-13-9-13-17V13zM18 24l4.5 4.5L30 20'},
++  ap:       {name:'Access Pt',  color:'green', icon:'M24 36h.1M18.5 30.5a8 8 0 0 1 11 0M13.5 25.5a15 15 0 0 1 21 0M8.5 20.5a22 22 0 0 1 31 0'},
++  wlc:      {name:'WLC',        color:'green', icon:'M10 30h28v8H10zM15 34h.1M20 34h.1M19 19.5a7 7 0 0 1 10 0M14.5 15a13.5 13.5 0 0 1 19 0M24 24h.1'},
++  nte:      {name:'NTE / CPE',  color:'grey',  icon:'M8 17h32v14H8zM13 24h.1M18 24h.1M23 24h.1M30 24h6'},
++  pc:       {name:'Endpoint',   color:'grey',  icon:'M9 11h30v19H9zM24 30v6M16 37h16'},
++  phone:    {name:'IP Phone',   color:'grey',  icon:'M12 14h8v22h-8zM24 16h13v18H24zM27 21h7M27 25h.1M31 25h.1M27 29h.1M31 29h.1'},
++};
++const CLOUDS = [{label:'Internet', color:'blue'}, {label:'MPLS WAN', color:'violet'}, {label:'Cloud', color:'grey'}];
++const LINKS = {
++  ethernet: {name:'Ethernet / copper', color:'black', dash:'solid', size:'m'},
++  smf:      {name:'Single-mode fibre (OS2)',  color:'yellow', dash:'solid', size:'m'},
++  fiber:    {name:'Multimode fibre (OM3/OM4)', color:'orange', dash:'solid', size:'m'},
++  trunk:    {name:'Trunk 802.1Q',      color:'blue', dash:'solid', size:'l'},
++  pc:       {name:'Port-channel / vPC',color:'blue', dash:'solid', size:'xl'},
++  wan:      {name:'WAN circuit',       color:'violet', dash:'dashed', size:'m'},
++  vpn:      {name:'VPN / tunnel',      color:'green', dash:'dotted', size:'m'},
++  mgmt:     {name:'OOB management',    color:'grey', dash:'dashed', size:'s'},
++};
++
++/* ---------- state ---------- */
++let board = {name:'Untitled board', shapes:[]};
++let cam = {x:0, y:0, z:1};
++let sel = new Set();
++let tool = 'select', toolArg = null;
++let prefs = {theme:null, grid:true, snap:false, library:true, guides:true};
++let style = {color:'black', fill:'none', dash:'draw', size:'m', fontSize:'m', arrows:'end', route:'straight'};
++let pages = [], curPage = 0, toolLock = false, camAnim = 0;
++const histories = {};
++let drag = null, editing = null, hoverId = null, spaceDown = false, clip = null;
++let undoStack = [], redoStack = [], lastSnap = '[]';
++const pointers = new Map();
++const byId = id => board.shapes.find(s => s.id === id);
++
++/* ---------- text measurement ---------- */
++const mctx = document.createElement('canvas').getContext('2d');
++function measure(t, fs, w = 400){ mctx.font = `${w} ${fs}px ${FONT}`; return mctx.measureText(t).width; }
++function wrap(text, maxW, fs, w = 400){
++  const out = [];
++  for (const para of String(text ?? '').split('\n')){
++    const words = para.split(/(\s+)/); let line = '';
++    for (const wd of words){
++      const test = line + wd;
++      if (measure(test, fs, w) <= maxW || !line.trim()){
++        if (measure(test, fs, w) > maxW && !line.trim()){          // single huge word: char-break
++          let chunk = '';
++          for (const ch of wd){ if (measure(chunk + ch, fs, w) > maxW && chunk){ out.push(chunk); chunk = ch; } else chunk += ch; }
++          line = chunk;
++        } else line = test;
++      } else { out.push(line.trimEnd()); line = wd.trimStart(); }
++    }
++    out.push(line.trimEnd());
++  }
++  return out;
++}
++function textSvg(text, x, y, maxW, fs, color, o = {}){
++  if (!text) return '';
++  const w = o.weight || 400, lines = o.nowrap ? String(text).split('\n') : wrap(text, Math.max(maxW, fs), fs, w), lh = fs * 1.28;
++  const y0 = o.top ? y + lh / 2 : y - (lines.length - 1) * lh / 2;
++  const anchor = o.align === 'left' ? 'start' : 'middle';
++  return `<text x="${r2(x)}" y="${r2(y0)}" font-size="${fs}" font-weight="${w}" fill="${color}" text-anchor="${anchor}" dominant-baseline="central"${o.opacity ? ` opacity="${o.opacity}"` : ''}${o.halo ? ` stroke="${BG()}" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke"` : ''}>` +
++    lines.map((l, i) => `<tspan x="${r2(x)}" y="${r2(y0 + i * lh)}">${esc(l) || ' '}</tspan>`).join('') + '</text>';
++}
++function layoutText(s){
++  const fs = FONTS[s.fontSize || 'm'], lines = String(s.text || '').split('\n');
++  s.w = Math.max(12, ...lines.map(l => measure(l, fs))) ; s.h = lines.length * fs * 1.28;
++}
++
++/* ---------- geometry ---------- */
++const center = s => ({x: s.x + s.w / 2, y: s.y + s.h / 2});
++const isBox = s => s.type !== 'connector' && s.type !== 'draw';
++function boundary(s, t){
++  const c = center(s), dx = t.x - c.x, dy = t.y - c.y, d = Math.hypot(dx, dy);
++  if (d < .01) return c;
++  const hw = s.w / 2, hh = s.h / 2; let k;
++  if (s.type === 'ellipse' || s.type === 'cloud' || (s.type === 'device' && DEVICES[s.kind]?.shape === 'circle')) k = 1 / Math.sqrt((dx/hw)**2 + (dy/hh)**2);
++  else if (s.type === 'diamond') k = 1 / (Math.abs(dx)/hw + Math.abs(dy)/hh);
++  else k = Math.min(hw / Math.max(Math.abs(dx), 1e-9), hh / Math.max(Math.abs(dy), 1e-9));
++  if (k >= 1) return {x: t.x, y: t.y};
++  return {x: c.x + dx * k + dx / d * 4, y: c.y + dy * k + dy / d * 4};
++}
++function connGeom(c){
++  const A = c.start.id ? byId(c.start.id) : null, B = c.end.id ? byId(c.end.id) : null;
++  const ra = A ? center(A) : {x: c.start.x, y: c.start.y}, rb = B ? center(B) : {x: c.end.x, y: c.end.y};
++  const bend = c.bend || 0;
++  if (c.route === 'elbow'){
++    const dx = rb.x - ra.x, dy = rb.y - ra.y;
++    if (Math.abs(dx) >= Math.abs(dy)){
++      const sx = Math.sign(dx) || 1;
++      const a = A ? {x: ra.x + sx * (A.w/2 + 4), y: ra.y} : ra, b = B ? {x: rb.x - sx * (B.w/2 + 4), y: rb.y} : rb;
++      const nat = (a.x + b.x) / 2, mx = nat + bend;
++      const pts = [a, {x: mx, y: a.y}, {x: mx, y: b.y}, b];
++      return {a, b, poly: pts, mid: {x: mx, y: (a.y + b.y) / 2}, axis: 'x', nat};
++    } else {
++      const sy = Math.sign(dy) || 1;
++      const a = A ? {x: ra.x, y: ra.y + sy * (A.h/2 + 4)} : ra, b = B ? {x: rb.x, y: rb.y - sy * (B.h/2 + 4)} : rb;
++      const nat = (a.y + b.y) / 2, my = nat + bend;
++      const pts = [a, {x: a.x, y: my}, {x: b.x, y: my}, b];
++      return {a, b, poly: pts, mid: {x: (a.x + b.x) / 2, y: my}, axis: 'y', nat};
++    }
++  }
++  const m = {x: (ra.x + rb.x) / 2, y: (ra.y + rb.y) / 2}, L = Math.hypot(rb.x - ra.x, rb.y - ra.y) || 1;
++  const n = {x: -(rb.y - ra.y) / L, y: (rb.x - ra.x) / L};
++  if (Math.abs(bend) < 1){
++    const a = A ? boundary(A, rb) : ra, b = B ? boundary(B, ra) : rb;
++    return {a, b, poly: [a, b], mid: {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2}, m, n};
++  }
++  const P = {x: m.x + n.x * bend, y: m.y + n.y * bend};
++  const a = A ? boundary(A, P) : ra, b = B ? boundary(B, P) : rb;
++  const ctrl = {x: 2 * P.x - (a.x + b.x) / 2, y: 2 * P.y - (a.y + b.y) / 2};
++  const poly = [];
++  for (let i = 0; i <= 24; i++){ const t = i / 24, u = 1 - t; poly.push({x: u*u*a.x + 2*u*t*ctrl.x + t*t*b.x, y: u*u*a.y + 2*u*t*ctrl.y + t*t*b.y}); }
++  return {a, b, ctrl, poly, mid: P, m, n};
++}
++function pointAlong(poly, dist){
++  for (let i = 1; i < poly.length; i++){
++    const p = poly[i-1], q = poly[i], L = Math.hypot(q.x - p.x, q.y - p.y);
++    if (dist <= L && L > 0){ const t = dist / L; return {x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t}; }
++    dist -= L;
++  }
++  return poly[poly.length - 1];
++}
++const polyLen = poly => poly.reduce((acc, q, i) => i ? acc + Math.hypot(q.x - poly[i-1].x, q.y - poly[i-1].y) : 0, 0);
++function distSeg(p, a, b){
++  const dx = b.x - a.x, dy = b.y - a.y, L = dx*dx + dy*dy;
++  let t = L ? ((p.x - a.x) * dx + (p.y - a.y) * dy) / L : 0; t = Math.max(0, Math.min(1, t));
++  return Math.hypot(p.x - a.x - t*dx, p.y - a.y - t*dy);
++}
++const distPoly = (p, poly) => poly.reduce((m, q, i) => i ? Math.min(m, distSeg(p, poly[i-1], q)) : m, Infinity);
++function bounds(s){
++  if (s.type === 'connector'){ const g = connGeom(s); return polyBounds(g.poly); }
++  if (s.type === 'draw'){ const b = polyBounds(s.pts.map(([x, y]) => ({x, y}))); b.x += s.x; b.y += s.y; return b; }
++  return {x: s.x, y: s.y, w: s.w, h: s.h};
++}
++function polyBounds(pts){
++  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
++  for (const p of pts){ x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y); }
++  return {x: x0, y: y0, w: x1 - x0, h: y1 - y0};
++}
++function deviceLabelBox(s){
++  const lines = [s.text ? measure(s.text, 14, 600) : 0, ...String(s.info || '').split('\n').filter(Boolean).map(l => measure(l, 11.5))];
++  const n = (s.text ? 1 : 0) + String(s.info || '').split('\n').filter(Boolean).length;
++  const w = Math.max(...lines, 0) + 8, cx = s.x + s.w / 2;
++  return {x: cx - w / 2, y: s.y + s.h + 4, w, h: n ? 8 + n * 16 : 0};
++}
++function hitBounds(s){
++  const b = bounds(s);
++  if (s.type === 'device') return union([b, deviceLabelBox(s)]);
++  return b;
++}
++function union(bs){
++  bs = bs.filter(b => b && b.w >= 0);
++  if (!bs.length) return null;
++  const x0 = Math.min(...bs.map(b => b.x)), y0 = Math.min(...bs.map(b => b.y));
++  const x1 = Math.max(...bs.map(b => b.x + b.w)), y1 = Math.max(...bs.map(b => b.y + b.h));
++  return {x: x0, y: y0, w: x1 - x0, h: y1 - y0};
++}
++const inside = (p, b, pad = 0) => p.x >= b.x - pad && p.x <= b.x + b.w + pad && p.y >= b.y - pad && p.y <= b.y + b.h + pad;
++const overlaps = (a, b) => a.x <= b.x + b.w && a.x + a.w >= b.x && a.y <= b.y + b.h && a.y + a.h >= b.y;
++const contains = (a, b) => b.x >= a.x && b.y >= a.y && b.x + b.w <= a.x + a.w && b.y + b.h <= a.y + a.h;
++
++/* ---------- shape rendering ---------- */
++function strokeAttrs(s, sw = SIZES[s.size || 'm']){
++  let da = '';
++  if (s.dash === 'dashed') da = ` stroke-dasharray="${r2(sw * 3.2)} ${r2(sw * 2.6)}"`;
++  else if (s.dash === 'dotted') da = ` stroke-dasharray="0.1 ${r2(sw * 2.4)}"`;
++  return `stroke="${col(s.color)}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"${da}`;
++}
++function fillAttr(s, semi = .1){
++  if (s.fill === 'semi') return `fill="${col(s.color)}" fill-opacity="${isDark() ? semi * 1.8 : semi}"`;
++  if (s.fill === 'solid') return `fill="${tint(s.color)}"`;
++  return 'fill="none"';
++}
++function cloudPath(x, y, w, h){
++  const cx = x + w / 2, cy = y + h / 2, rx = w / 2 * .82, ry = h / 2 * .72;
++  const n = Math.max(7, Math.min(14, Math.round((w + h) / 45)));
++  const pts = [];
++  for (let i = 0; i < n; i++){ const a = -Math.PI / 2 + i / n * Math.PI * 2 + .3; pts.push({x: cx + Math.cos(a) * rx, y: cy + Math.sin(a) * ry}); }
++  let d = `M${r2(pts[0].x)} ${r2(pts[0].y)}`;
++  for (let i = 0; i < n; i++){
++    const p = pts[i], q = pts[(i + 1) % n], r = Math.hypot(q.x - p.x, q.y - p.y) * .62;
++    d += `A${r2(r)} ${r2(r)} 0 0 1 ${r2(q.x)} ${r2(q.y)}`;
++  }
++  return d + 'Z';
++}
++/* ---------- freehand stroke engine (perfect-freehand style variable-width outlines) ---------- */
++function seeded(str){
++  let h = 2166136261 >>> 0;
++  for (const c of String(str)){ h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
++  return () => { h ^= h << 13; h >>>= 0; h ^= h >>> 17; h ^= h << 5; h >>>= 0; return (h % 100000) / 100000; };
++}
++function smoothSeg(pts){
++  let d = '';
++  for (let i = 1; i < pts.length - 1; i++){ const a = pts[i], b = pts[i + 1]; d += `Q${r2(a.x)} ${r2(a.y)} ${r2((a.x + b.x) / 2)} ${r2((a.y + b.y) / 2)}`; }
++  const l = pts[pts.length - 1]; return d + `L${r2(l.x)} ${r2(l.y)}`;
++}
++const easeOut = t => 1 - (1 - t) * (1 - t);
++function freehand(input, o){
++  const size = o.size, thin = o.thinning ?? .5, keep = 1 - (o.streamline ?? .45);
++  const pts = [];
++  for (const q of input){
++    if (!pts.length){ pts.push({...q}); continue; }
++    const pv = pts[pts.length - 1];
++    const n = {x: pv.x + (q.x - pv.x) * keep, y: pv.y + (q.y - pv.y) * keep, p: q.p};
++    if (Math.hypot(n.x - pv.x, n.y - pv.y) > .3) pts.push(n);
++  }
++  if (o.last && input.length > 1){ const l = input[input.length - 1], pv = pts[pts.length - 1]; if (Math.hypot(l.x - pv.x, l.y - pv.y) > .3) pts.push({...l}); }
++  if (pts.length < 2){
++    const c = pts[0], r = Math.max(size * .5, .5);
++    return `M${r2(c.x - r)} ${r2(c.y)}a${r2(r)} ${r2(r)} 0 1 0 ${r2(2 * r)} 0a${r2(r)} ${r2(r)} 0 1 0 ${r2(-2 * r)} 0Z`;
++  }
++  const dist = [0];
++  for (let i = 1; i < pts.length; i++) dist.push(dist[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y));
++  const total = dist[dist.length - 1];
++  let prevP = .5; const L = [], R = [];
++  for (let i = 0; i < pts.length; i++){
++    let pr;
++    if (o.simulate){ const seg = i ? dist[i] - dist[i - 1] : 0, sp = Math.min(1, seg / size), rp = Math.min(1, 1 - sp); prevP = Math.min(1, prevP + (rp - prevP) * sp * .275); pr = prevP; }
++    else pr = pts[i].p ?? .5;
++    let r = size * (.5 - thin * (.5 - pr));
++    if (o.taperStart) r *= easeOut(Math.min(1, dist[i] / o.taperStart));
++    if (o.taperEnd) r *= easeOut(Math.min(1, (total - dist[i]) / o.taperEnd));
++    r = Math.max(r, .3);
++    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
++    let dx = b.x - a.x, dy = b.y - a.y; const dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;
++    L.push({x: pts[i].x - dy * r, y: pts[i].y + dx * r, r}); R.push({x: pts[i].x + dy * r, y: pts[i].y - dx * r, r});
++  }
++  const le = L[L.length - 1], re = R[R.length - 1], ls = L[0], rs = R[0];
++  return `M${r2(ls.x)} ${r2(ls.y)}` + smoothSeg(L) + `A${r2(le.r)} ${r2(le.r)} 0 0 0 ${r2(re.x)} ${r2(re.y)}` +
++    smoothSeg(R.slice().reverse()) + `A${r2(rs.r)} ${r2(rs.r)} 0 0 0 ${r2(ls.x)} ${r2(ls.y)}Z`;
++}
++/* hand-drawn outline for geo shapes (tldraw "draw" style) */
++function sketchPts(s){
++  const rnd = seeded(s.id + s.type), {x, y, w, h} = s, pts = [];
++  const per = s.type === 'ellipse' ? Math.PI * (w + h) / 2 : 2 * (w + h);
++  const step = Math.max(5, Math.min(14, per / 60));
++  if (s.type === 'ellipse'){
++    const n = Math.max(24, Math.round(per / step)), a0 = rnd() * Math.PI * 2, extra = Math.round(n * .06);
++    for (let i = 0; i <= n + extra; i++){ const a = a0 + i / n * Math.PI * 2; pts.push({x: x + w / 2 + Math.cos(a) * w / 2, y: y + h / 2 + Math.sin(a) * h / 2}); }
++  } else {
++    const C = s.type === 'diamond' ? [[x + w / 2, y], [x + w, y + h / 2], [x + w / 2, y + h], [x, y + h / 2]] : [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
++    const rr = s.type === 'diamond' ? 0 : Math.min(s.type === 'zone' ? 14 : 10, w / 4, h / 4);
++    const start = Math.floor(rnd() * 4);
++    for (let k = 0; k <= 4; k++){
++      const i = (start + k) % 4, [ax, ay] = C[i], [bx, by] = C[(i + 1) % 4];
++      const len = Math.hypot(bx - ax, by - ay) || 1, ux = (bx - ax) / len, uy = (by - ay) / len;
++      const n = Math.max(2, Math.round((len - 2 * rr) / step)), lim = k === 4 ? Math.max(1, Math.round(n * .22)) : n;
++      for (let j = 0; j <= lim; j++){ const t = rr + (len - 2 * rr) * j / n; pts.push({x: ax + ux * t, y: ay + uy * t}); }
++      if (rr && k < 4){
++        const [cx2, cy2] = C[(i + 1) % 4], [nx2, ny2] = C[(i + 2) % 4];
++        const l2 = Math.hypot(nx2 - cx2, ny2 - cy2) || 1, vx = (nx2 - cx2) / l2, vy = (ny2 - cy2) / l2;
++        const p0 = {x: cx2 - ux * rr, y: cy2 - uy * rr}, p2 = {x: cx2 + vx * rr, y: cy2 + vy * rr};
++        for (let j = 1; j < 4; j++){ const t = j / 4, u = 1 - t; pts.push({x: u * u * p0.x + 2 * u * t * cx2 + t * t * p2.x, y: u * u * p0.y + 2 * u * t * cy2 + t * t * p2.y}); }
++      }
++    }
++  }
++  const amp = Math.min(2.4, Math.max(.7, Math.min(w, h) * .014)), ph1 = rnd() * 6.28, ph2 = rnd() * 6.28, f1 = 2 + rnd() * 2, f2 = 5 + rnd() * 3;
++  const N = pts.length;
++  return pts.map((p, i) => {
++    const t = i / N * Math.PI * 2, a = pts[Math.max(0, i - 1)], b = pts[Math.min(N - 1, i + 1)];
++    const dx = b.x - a.x, dy = b.y - a.y, dl = Math.hypot(dx, dy) || 1;
++    const off = amp * (Math.sin(t * f1 + ph1) * .65 + Math.sin(t * f2 + ph2) * .35);
++    return {x: p.x - dy / dl * off, y: p.y + dx / dl * off, p: .5 + .2 * Math.sin(t * 3 + ph2)};
++  });
++}
++function sketchStroke(s){
++  const sw = SIZES[s.size || 'm'];
++  return `<path d="${freehand(sketchPts(s), {size: sw * 1.2 + .8, thinning: .55, streamline: 0})}" fill="${col(s.color)}"/>`;
++}
++function deviceIcon(kind, x, y, w, h, color, fillMode){
++  const d = DEVICES[kind] || DEVICES.switch, c = COLORS[color] ? col(color) : color;
++  let tileFill, tileStroke, iconCol;
++  if (fillMode === 'none'){ tileFill = PANEL(); tileStroke = c; iconCol = c; }
++  else if (fillMode === 'semi'){ tileFill = tint(color); tileStroke = c; iconCol = c; }
++  else { tileFill = c; tileStroke = c; iconCol = '#ffffff'; }
++  const tile = d.shape === 'circle'
++    ? `<ellipse cx="${r2(x + w/2)}" cy="${r2(y + h/2)}" rx="${r2(w/2)}" ry="${r2(h/2)}" fill="${tileFill}" stroke="${tileStroke}" stroke-width="2"/>`
++    : `<rect x="${r2(x)}" y="${r2(y)}" width="${r2(w)}" height="${r2(h)}" rx="${r2(Math.min(w, h) * .18)}" fill="${tileFill}" stroke="${tileStroke}" stroke-width="2"/>`;
++  return tile + `<g transform="translate(${r2(x)} ${r2(y)}) scale(${r2(w / 48)} ${r2(h / 48)})"><path d="${d.icon}" fill="none" stroke="${iconCol}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></g>`;
++}
++function renderShape(s){
++  const ed = editing && editing.id === s.id ? editing.field : null;
++  const fs = FONTS[s.fontSize || 'm'];
++  switch (s.type){
++    case 'rect': case 'ellipse': case 'diamond': case 'cloud': {
++      const {x, y, w, h} = s; let body;
++      if (s.dash === 'draw' && s.type !== 'cloud' && w > 1 && h > 1){
++        const fillEl = s.fill === 'none' ? '' :
++          s.type === 'rect' ? `<rect x="${r2(x)}" y="${r2(y)}" width="${r2(w)}" height="${r2(h)}" rx="${r2(Math.min(10, w/4, h/4))}" ${fillAttr(s)}/>` :
++          s.type === 'ellipse' ? `<ellipse cx="${r2(x + w/2)}" cy="${r2(y + h/2)}" rx="${r2(w/2)}" ry="${r2(h/2)}" ${fillAttr(s)}/>` :
++          `<path d="M${r2(x + w/2)} ${r2(y)}L${r2(x + w)} ${r2(y + h/2)}L${r2(x + w/2)} ${r2(y + h)}L${r2(x)} ${r2(y + h/2)}Z" ${fillAttr(s)}/>`;
++        body = fillEl + sketchStroke(s);
++      }
++      else if (s.type === 'rect') body = `<rect x="${r2(x)}" y="${r2(y)}" width="${r2(w)}" height="${r2(h)}" rx="${r2(Math.min(10, w/4, h/4))}" ${fillAttr(s)} ${strokeAttrs(s)}/>`;
++      else if (s.type === 'ellipse') body = `<ellipse cx="${r2(x + w/2)}" cy="${r2(y + h/2)}" rx="${r2(w/2)}" ry="${r2(h/2)}" ${fillAttr(s)} ${strokeAttrs(s)}/>`;
++      else if (s.type === 'diamond') body = `<path d="M${r2(x + w/2)} ${r2(y)}L${r2(x + w)} ${r2(y + h/2)}L${r2(x + w/2)} ${r2(y + h)}L${r2(x)} ${r2(y + h/2)}Z" ${fillAttr(s)} ${strokeAttrs(s)}/>`;
++      else body = `<path d="${cloudPath(x, y, w, h)}" ${fillAttr(s)} ${strokeAttrs(s)}/>`;
++      const tw = s.type === 'rect' ? w - 24 : s.type === 'diamond' ? w * .5 : w * .62;
++      return body + (ed ? '' : textSvg(s.text, x + w/2, y + h/2, tw, fs, col(s.color), {weight: s.type === 'cloud' ? 600 : 400}));
++    }
++    case 'zone': {
++      const {x, y, w, h} = s, c = col(s.color);
++      const zb = s.dash === 'draw' && w > 1 && h > 1 ? `<rect x="${r2(x)}" y="${r2(y)}" width="${r2(w)}" height="${r2(h)}" rx="14" ${fillAttr(s, .05)}/>` + sketchStroke(s)
++        : `<rect x="${r2(x)}" y="${r2(y)}" width="${r2(w)}" height="${r2(h)}" rx="14" ${fillAttr(s, .05)} ${strokeAttrs(s)}/>`;
++      return zb +
++        (ed ? '' : textSvg(s.text, x + 14, y + 20, w - 28, Math.min(fs, 20), c, {align: 'left', weight: 600, nowrap: true}));
++    }
++    case 'note': {
++      const {x, y, w, h} = s;
++      return `<rect x="${r2(x)}" y="${r2(y)}" width="${r2(w)}" height="${r2(h)}" rx="6" fill="${noteBg(s.color)}" filter="url(#shadow)"/>` +
++        (ed ? '' : textSvg(s.text, x + w/2, y + h/2, w - 28, fs, TEXT()));
++    }
++    case 'text':
++      if (ed) return '';
++      return textSvg(s.text, s.x, s.y, 1e6, fs, col(s.color), {align: 'left', top: true, nowrap: true});
++    case 'draw': {
++      const p = s.pts; if (!p.length) return '';
++      const sw = SIZES[s.size || 'm'];
++      if (s.dash !== 'dashed' && s.dash !== 'dotted'){
++        const live = drag && drag.type === 'draw' && drag.id === s.id, hasP = p.some(q => q[2] != null);
++        const d = freehand(p.map(([px, py, pp]) => ({x: s.x + px, y: s.y + py, p: pp})),
++          {size: sw * 1.7 + 1.6, thinning: s.dash === 'solid' ? 0 : .55, streamline: .4, simulate: !hasP, last: !live});
++        return `<path d="${d}" fill="${col(s.color)}"/>`;
++      }
++      if (p.length < 3) return `<circle cx="${r2(s.x + p[0][0])}" cy="${r2(s.y + p[0][1])}" r="${sw / 1.4}" fill="${col(s.color)}"/>`;
++      let d = `M${r2(s.x + p[0][0])} ${r2(s.y + p[0][1])}`;
++      for (let i = 1; i < p.length - 1; i++){
++        const mx = (p[i][0] + p[i+1][0]) / 2, my = (p[i][1] + p[i+1][1]) / 2;
++        d += `Q${r2(s.x + p[i][0])} ${r2(s.y + p[i][1])} ${r2(s.x + mx)} ${r2(s.y + my)}`;
++      }
++      const l = p[p.length - 1]; d += `L${r2(s.x + l[0])} ${r2(s.y + l[1])}`;
++      return `<path d="${d}" fill="none" ${strokeAttrs(s)}/>`;
++    }
++    case 'device': {
++      const {x, y, w, h} = s, cx = x + w / 2;
++      let out = deviceIcon(s.kind, x, y, w, h, s.color, s.fill);
++      if (s.role && ROLES[s.role]){
++        const bw = measure(s.role, 10, 700) + 10;
++        out += `<rect x="${r2(x + w - bw + 6)}" y="${r2(y - 8)}" width="${r2(bw)}" height="16" rx="8" fill="${ROLES[s.role]}" stroke="${PANEL()}" stroke-width="2"/>` +
++               `<text x="${r2(x + w - bw / 2 + 6)}" y="${r2(y)}" font-size="10" font-weight="700" fill="#fff" text-anchor="middle" dominant-baseline="central">${esc(s.role)}</text>`;
++      }
++      let ly = y + h + 16;
++      if (s.text && ed !== 'text'){ out += textSvg(s.text, cx, ly, 1e6, 14, TEXT(), {weight: 600, nowrap: true, halo: true}); }
++      if (s.text) ly += 17;
++      const info = String(s.info || '').split('\n').filter(Boolean);
++      info.forEach((l, i) => { out += textSvg(l, cx, ly + i * 16, 1e6, 11.5, isDark() ? '#9ca3af' : '#5f6570', {nowrap: true, halo: true}); });
++      return out;
++    }
++    case 'connector': return renderConnector(s, ed);
++  }
++  return '';
++}
++function arrowHead(tip, from, sw, color){
++  const dx = tip.x - from.x, dy = tip.y - from.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
++  const size = 7 + sw * 2.2, wd = size * .55;
++  const bx = tip.x - ux * size, by = tip.y - uy * size;
++  return `<path d="M${r2(tip.x)} ${r2(tip.y)}L${r2(bx - uy * wd)} ${r2(by + ux * wd)}L${r2(bx + uy * wd)} ${r2(by - ux * wd)}Z" fill="${color}" stroke="${color}" stroke-width="${sw * .6}" stroke-linejoin="round"/>`;
++}
++function pill(text, p, fs, color, opts = {}){
++  const w = measure(text, fs, opts.weight || 500) + 10, h = fs + 8;
++  return `<rect x="${r2(p.x - w/2)}" y="${r2(p.y - h/2)}" width="${r2(w)}" height="${r2(h)}" rx="${opts.round ? h/2 : 4}" fill="${BG()}"${opts.border ? ` stroke="${color}" stroke-opacity=".35" stroke-width="1"` : ''}/>` +
++    `<text x="${r2(p.x)}" y="${r2(p.y)}" font-size="${fs}" font-weight="${opts.weight || 500}" fill="${color}" text-anchor="middle" dominant-baseline="central">${esc(text)}</text>`;
++}
++function renderConnector(s, ed){
++  const g = connGeom(s), sw = SIZES[s.size || 'm'], c = col(s.color);
++  let d;
++  if (g.ctrl) d = `M${r2(g.a.x)} ${r2(g.a.y)}Q${r2(g.ctrl.x)} ${r2(g.ctrl.y)} ${r2(g.b.x)} ${r2(g.b.y)}`;
++  else d = 'M' + g.poly.map(p => `${r2(p.x)} ${r2(p.y)}`).join('L');
++  let out = `<path d="${d}" fill="none" ${strokeAttrs(s)}/>`;
++  const P = g.poly, n = P.length;
++  if (s.arrows === 'end' || s.arrows === 'both') out += arrowHead(g.b, P[n - 2], sw, c);
++  if (s.arrows === 'both') out += arrowHead(g.a, P[1], sw, c);
++  const L = polyLen(P), fsP = 11;
++  const portOff = (id, from, to, w) => {           // keep port labels clear of the device's hostname block
++    const sh = id ? byId(id) : null; let off = 14 + w / 2;
++    const dx = to.x - from.x, dy = to.y - from.y, d = Math.hypot(dx, dy) || 1;
++    if (sh && sh.type === 'device' && dy / d > .25){ const lb = deviceLabelBox(sh); off += Math.min(lb.h / (dy / d), lb.h * 2) * .8; }
++    return Math.min(off, L * .42);
++  };
++  if (s.startLabel){ const w = measure(s.startLabel, fsP, 500) + 10; out += pill(s.startLabel, pointAlong(P, portOff(s.start.id, P[0], P[1], w)), fsP, c, {border: true, round: true}); }
++  if (s.endLabel){ const w = measure(s.endLabel, fsP, 500) + 10; out += pill(s.endLabel, pointAlong(P, L - portOff(s.end.id, P[n - 1], P[n - 2], w)), fsP, c, {border: true, round: true}); }
++  if (s.text && ed !== 'text'){
++    const fs = Math.round(FONTS[s.fontSize || 'm'] * .72), lines = String(s.text).split('\n'), lh = fs * 1.28;
++    const w = Math.max(...lines.map(l => measure(l, fs, 500))) + 12, h = lines.length * lh + 6;
++    out += `<rect x="${r2(g.mid.x - w/2)}" y="${r2(g.mid.y - h/2)}" width="${r2(w)}" height="${r2(h)}" rx="4" fill="${BG()}"/>` +
++      textSvg(s.text, g.mid.x, g.mid.y, 1e6, fs, c, {weight: 500, nowrap: true});
++  }
++  return out;
++}
++function connLabelBox(s, g){
++  if (!s.text) return null;
++  const fs = Math.round(FONTS[s.fontSize || 'm'] * .72), lines = String(s.text).split('\n');
++  const w = Math.max(...lines.map(l => measure(l, fs, 500))) + 12, h = lines.length * fs * 1.28 + 6;
++  return {x: g.mid.x - w/2, y: g.mid.y - h/2, w, h};
++}
++const layerOf = s => s.type === 'zone' ? 0 : s.type === 'connector' ? 1 : 2;
++function renderShapesSvg(shapes){
++  let out = '';
++  for (const L of [0, 1, 2]) for (const s of shapes) if (layerOf(s) === L) out += `<g data-id="${s.id}"${drag && drag.type === 'erase' && drag.ids.has(s.id) ? ' opacity=".25"' : ''}>${renderShape(s)}</g>`;
++  return out;
++}
++
++/* ---------- render loop (keyed DOM: only changed shapes touch the DOM) ---------- */
++const gCache = new Map(), SVGNS = 'http://www.w3.org/2000/svg';
++function drawWorld(){
++  const world = $('#world'), seen = new Set(); let prev = null;
++  for (const L of [0, 1, 2]) for (const s of board.shapes){
++    if (layerOf(s) !== L) continue;
++    let c = gCache.get(s.id);
++    if (!c){ const g = document.createElementNS(SVGNS, 'g'); g.setAttribute('data-id', s.id); c = {g, str: null, op: ''}; gCache.set(s.id, c); }
++    const str = renderShape(s);
++    if (c.str !== str){ c.g.innerHTML = str; c.str = str; }
++    const op = drag && drag.type === 'erase' && drag.ids.has(s.id) ? '.25' : '';
++    if (c.op !== op){ op ? c.g.setAttribute('opacity', op) : c.g.removeAttribute('opacity'); c.op = op; }
++    const want = prev ? prev.nextSibling : world.firstChild;
++    if (want !== c.g) world.insertBefore(c.g, want);
++    prev = c.g; seen.add(s.id);
++  }
++  for (const [id, c] of gCache) if (!seen.has(id)){ c.g.remove(); gCache.delete(id); }
++}
++let raf = 0, panelKey = '';
++function render(){ if (!raf) raf = requestAnimationFrame(() => { raf = 0; draw(); }); }
++function draw(){
++  const T = `translate(${r2(cam.x)} ${r2(cam.y)}) scale(${cam.z})`;
++  $('#world').setAttribute('transform', T);
++  $('#world').setAttribute('font-family', FONT);
++  drawWorld();
++  // grid
++  let step = 20; while (step * cam.z < 14) step *= 2; while (step * cam.z > 56) step /= 2;
++  const pat = $('#dots'); pat.setAttribute('width', step); pat.setAttribute('height', step);
++  pat.setAttribute('patternTransform', `translate(${r2(cam.x)} ${r2(cam.y)}) scale(${cam.z})`);
++  const dot = $('#dot'); dot.setAttribute('r', r2(1 / cam.z)); dot.setAttribute('cx', r2(1 / cam.z)); dot.setAttribute('cy', r2(1 / cam.z));
++  $('#gridbg').style.display = prefs.grid ? '' : 'none';
++  drawUI(T);
++  $('#zoomPct').textContent = Math.round(cam.z * 100) + '%';
++  updateToolbar();
++  const key = [...sel].join(',') + '|' + tool + '|' + (toolArg || '') + '|' + (drag ? 1 : 0);
++  if (key !== panelKey){ panelKey = key; buildPanel(); }
++  if (editing) positionEditor();
++}
++function drawUI(T){
++  const ui = $('#ui'); ui.setAttribute('transform', T);
++  const z = cam.z, A = isDark() ? '#4d8ff5' : '#1f6feb';
++  let out = '';
++  const shapes = [...sel].map(byId).filter(Boolean);
++  if (hoverId && !sel.has(hoverId)){
++    const h = byId(hoverId), bind = tool === 'arrow' || tool === 'link' || (drag && drag.type === 'endpoint');
++    if (h && bind && h.type !== 'connector'){ const b = bounds(h); out += `<rect x="${b.x - 4/z}" y="${b.y - 4/z}" width="${b.w + 8/z}" height="${b.h + 8/z}" rx="${6/z}" fill="${A}" fill-opacity=".08" stroke="${A}" stroke-width="${2/z}"/>`; }
++    else if (h && !drag){
++      if (h.type === 'connector'){ const g = connGeom(h); out += `<path d="M${g.poly.map(p => `${r2(p.x)} ${r2(p.y)}`).join('L')}" fill="none" stroke="${A}" stroke-width="${1.5/z}"/>`; }
++      else if (h.type === 'ellipse'){ out += `<ellipse cx="${h.x + h.w/2}" cy="${h.y + h.h/2}" rx="${h.w/2}" ry="${h.h/2}" fill="none" stroke="${A}" stroke-width="${1.5/z}"/>`; }
++      else { const b = bounds(h); out += `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${h.type === 'rect' ? Math.min(10, b.w/4, b.h/4) : h.type === 'zone' ? 14 : 0}" fill="none" stroke="${A}" stroke-width="${1.5/z}"/>`; }
++    }
++  }
++  for (const s of shapes){
++    if (s.type === 'connector'){
++      const g = connGeom(s);
++      out += `<path d="M${g.poly.map(p => `${r2(p.x)} ${r2(p.y)}`).join('L')}" fill="none" stroke="${A}" stroke-width="${1.5/z}" stroke-opacity=".5"/>`;
++    } else {
++      const b = bounds(s);
++      out += `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" fill="none" stroke="${A}" stroke-width="${1.5/z}"/>`;
++    }
++  }
++  if (shapes.length === 1 && !editing){
++    const s = shapes[0];
++    if (s.type === 'connector'){
++      const g = connGeom(s);
++      for (const [p, bound] of [[g.a, s.start.id], [g.b, s.end.id]])
++        out += `<circle cx="${p.x}" cy="${p.y}" r="${6/z}" fill="${bound ? A : '#fff'}" stroke="${A}" stroke-width="${2/z}"/>`;
++      out += `<circle cx="${g.mid.x}" cy="${g.mid.y}" r="${4.5/z}" fill="#fff" stroke="${A}" stroke-width="${1.5/z}"/>`;
++    } else if (s.type !== 'text' && (!drag || drag.type !== 'move')){
++      for (const h of handlesOf(s)) out += `<rect x="${h.x - 4.5/z}" y="${h.y - 4.5/z}" width="${9/z}" height="${9/z}" rx="${2.5/z}" fill="#fff" stroke="${A}" stroke-width="${1.5/z}"/>`;
++    }
++  } else if (shapes.length > 1){
++    const b = union(shapes.map(bounds));
++    out += `<rect x="${b.x - 6/z}" y="${b.y - 6/z}" width="${b.w + 12/z}" height="${b.h + 12/z}" fill="none" stroke="${A}" stroke-width="${1/z}" stroke-dasharray="${4/z} ${3/z}"/>`;
++  }
++  if (drag && drag.guides){
++    const G = '#ff2e7e';
++    for (const g of drag.guides){
++      out += `<line x1="${g.x1}" y1="${g.y1}" x2="${g.x2}" y2="${g.y2}" stroke="${G}" stroke-width="${1/z}"/>`;
++      for (const [px, py] of [[g.x1, g.y1], [g.x2, g.y2]]){ const k = 3 / z; out += `<path d="M${px - k} ${py - k}L${px + k} ${py + k}M${px + k} ${py - k}L${px - k} ${py + k}" stroke="${G}" stroke-width="${1/z}"/>`; }
++    }
++  }
++  if (drag && drag.type === 'marquee'){
++    const b = rectFrom(drag.start, drag.cur);
++    out += `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" fill="${A}" fill-opacity=".08" stroke="${A}" stroke-width="${1/z}"/>`;
++  }
++  ui.innerHTML = out;
++}
++const rectFrom = (a, b) => ({x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(b.x - a.x), h: Math.abs(b.y - a.y)});
++function handlesOf(s){
++  const b = bounds(s), {x, y, w, h} = b;
++  return [['nw', x, y], ['ne', x + w, y], ['se', x + w, y + h], ['sw', x, y + h]]
++    .map(([k, X, Y]) => ({k, x: X, y: Y}));
++}
++
++/* ---------- hit testing ---------- */
++function hitTest(p){
++  const tol = 6 / cam.z, list = board.shapes;
++  for (const L of [2, 1, 0]){
++    for (let i = list.length - 1; i >= 0; i--){
++      const s = list[i]; if (layerOf(s) !== L) continue;
++      if (hitShape(s, p, tol)) return s;
++    }
++  }
++  return null;
++}
++function hitShape(s, p, tol){
++  const sw = SIZES[s.size || 'm'];
++  switch (s.type){
++    case 'connector': { const g = connGeom(s); if (distPoly(p, g.poly) < tol + sw / 2 + 2) return true; const lb = connLabelBox(s, g); return !!(lb && inside(p, lb)); }
++    case 'draw': return distPoly(p, s.pts.map(([x, y]) => ({x: s.x + x, y: s.y + y}))) < tol + sw / 2 + 2;
++    case 'zone': { const b = bounds(s); if (!inside(p, b, tol)) return false; return !inside(p, {x: b.x + tol, y: b.y + 34, w: b.w - 2*tol, h: b.h - 34 - tol}); }
++    case 'rect': case 'ellipse': case 'diamond': case 'cloud': {
++      const b = bounds(s);
++      if (s.fill !== 'none' || s.text) return inside(p, b, tol);
++      return inside(p, b, tol + sw) && !inside(p, {x: b.x + tol + sw, y: b.y + tol + sw, w: b.w - 2*(tol + sw), h: b.h - 2*(tol + sw)});
++    }
++    default: return inside(p, hitBounds(s), tol);
++  }
++}
++function eraseAt(p){
++  const s = hitTest(p);
++  if (s && !drag.ids.has(s.id)) drag.ids.add(s.id);
++}
++function bindTarget(p, excludeId){
++  const list = board.shapes;
++  for (let i = list.length - 1; i >= 0; i--){
++    const s = list[i];
++    if (s.type === 'connector' || s.type === 'draw' || s.id === excludeId) continue;
++    if (s.type === 'zone'){ if (hitShape(s, p, 6 / cam.z)) return s; continue; }
++    if (inside(p, bounds(s), 8 / cam.z)) return s;
++  }
++  return null;
++}
++function hitHandle(p){
++  if (sel.size !== 1) return null;
++  const s = byId([...sel][0]); if (!s) return null;
++  const tol = 8 / cam.z;
++  if (s.type === 'connector'){
++    const g = connGeom(s);
++    if (Math.hypot(p.x - g.a.x, p.y - g.a.y) < tol) return {kind: 'endpoint', which: 'start', s};
++    if (Math.hypot(p.x - g.b.x, p.y - g.b.y) < tol) return {kind: 'endpoint', which: 'end', s};
++    if (Math.hypot(p.x - g.mid.x, p.y - g.mid.y) < tol) return {kind: 'bend', s};
++    return null;
++  }
++  if (s.type === 'text') return null;
++  for (const h of handlesOf(s)) if (Math.abs(p.x - h.x) < tol && Math.abs(p.y - h.y) < tol) return {kind: 'resize', k: h.k, s};
++  const b = bounds(s), t = 5 / cam.z;                      // invisible edge handles, like tldraw
++  if (b.w * cam.z > 20 && b.h * cam.z > 20){
++    if (p.x > b.x && p.x < b.x + b.w){ if (Math.abs(p.y - b.y) < t) return {kind: 'resize', k: 'n', s}; if (Math.abs(p.y - b.y - b.h) < t) return {kind: 'resize', k: 's', s}; }
++    if (p.y > b.y && p.y < b.y + b.h){ if (Math.abs(p.x - b.x) < t) return {kind: 'resize', k: 'w', s}; if (Math.abs(p.x - b.x - b.w) < t) return {kind: 'resize', k: 'e', s}; }
++  }
++  return null;
++}
++
++/* ---------- history & persistence ---------- */
++function commit(){
++  const snap = JSON.stringify(board.shapes);
++  if (snap === lastSnap) return;
++  undoStack.push(lastSnap); if (undoStack.length > 300) undoStack.shift();
++  lastSnap = snap; redoStack = []; save();
++}
++function restore(snap){ board.shapes = JSON.parse(snap); lastSnap = snap; for (const id of [...sel]) if (!byId(id)) sel.delete(id); panelKey = ''; render(); save(); }
++function undo(){ if (editing) finishEdit(); if (!undoStack.length) return; redoStack.push(lastSnap); restore(undoStack.pop()); }
++function redo(){ if (!redoStack.length) return; undoStack.push(lastSnap); restore(redoStack.pop()); }
++let saveT = 0;
++function save(){
++  clearTimeout(saveT);
++  saveT = setTimeout(() => { syncPage(); try { localStorage.setItem(STORE_KEY, JSON.stringify({name: board.name, pages, current: curPage})); } catch (e) {} }, 250);
++}
++function savePrefs(){ try { localStorage.setItem(PREF_KEY, JSON.stringify({prefs, style})); } catch (e) {} }
++function load(){
++  try { const p = JSON.parse(localStorage.getItem(PREF_KEY) || 'null'); if (p){ Object.assign(prefs, p.prefs || {}); Object.assign(style, p.style || {}); } } catch (e) {}
++  try {
++    const b = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
++    if (b && (Array.isArray(b.pages) && b.pages.length || Array.isArray(b.shapes))){
++      board.name = b.name || 'Untitled board';
++      pages = Array.isArray(b.pages) && b.pages.length ? b.pages : [{id: uid(), name: '', shapes: b.shapes, cam: b.cam}];
++      pages.forEach((pg, i) => { pg.id = pg.id || uid(); pg.name = normPageName(pg.name); pg.shapes = Array.isArray(pg.shapes) ? pg.shapes : []; });
++      curPage = Math.min(Math.max(0, b.current | 0), pages.length - 1);
++      board.shapes = pages[curPage].shapes; if (pages[curPage].cam) cam = {...pages[curPage].cam};
++      return true;
++    }
++  } catch (e) {}
++  return false;
++}
++
++/* ---------- pages ----------
++   Each page is shown as "Page <number>" plus an optional unique name, e.g. "Page 1 · Mexico". */
++const normPageName = n => { n = String(n || '').trim(); return /^page\s*\d+$/i.test(n) ? '' : n.replace(/^page\s*\d+\s*[·:\-–]\s*/i, '').slice(0, 60); };
++const pageLabel = i => pages[i] ? `Page ${i + 1}${pages[i].name ? ' · ' + pages[i].name : ''}` : '';
++const nameTaken = (name, except) => pages.some((p, j) => j !== except && p.name && p.name.toLowerCase() === name.toLowerCase());
++function syncPage(){ const pg = pages[curPage]; if (pg){ pg.shapes = board.shapes; pg.cam = {...cam}; } }
++function switchPage(i, force = false){
++  if (i === curPage && !force) return;
++  if (editing) finishEdit();
++  cancelAnimationFrame(camAnim);
++  syncPage();
++  const old = pages[curPage]; if (old) histories[old.id] = {undoStack, redoStack, lastSnap};
++  curPage = Math.max(0, Math.min(pages.length - 1, i));
++  const pg = pages[curPage];
++  board.shapes = pg.shapes || (pg.shapes = []);
++  board.shapes.forEach(s => { if (s.type === 'text') layoutText(s); });
++  cam = pg.cam ? {...pg.cam} : {x: innerWidth / 2, y: innerHeight / 2, z: 1};
++  const h = histories[pg.id];
++  if (h){ undoStack = h.undoStack; redoStack = h.redoStack; lastSnap = h.lastSnap; }
++  else { undoStack = []; redoStack = []; lastSnap = JSON.stringify(board.shapes); }
++  sel.clear(); hoverId = null; panelKey = ''; updatePageUI(); save(); render();
++}
++function uniquePageName(base){
++  if (!nameTaken(base, -1)) return base;
++  let n = 2; while (nameTaken(`${base} ${n}`, -1)) n++; return `${base} ${n}`;
++}
++function addPage(){
++  syncPage();
++  pages.splice(curPage + 1, 0, {id: uid(), name: '', shapes: [], cam: null});
++  switchPage(curPage + 1, true);
++  if ($('#pagesPanel').classList.contains('open')) renamePageInline(curPage);   // ask for a name straight away
++  else toast(pageLabel(curPage) + ' added');
++}
++function duplicatePage(i){
++  syncPage();
++  const src = pages[i], map = {};
++  const shapes = JSON.parse(JSON.stringify(src.shapes));
++  shapes.forEach(s => map[s.id] = uid());
++  shapes.forEach(s => { s.id = map[s.id]; if (s.type === 'connector'){ if (s.start.id) s.start.id = map[s.start.id]; if (s.end.id) s.end.id = map[s.end.id]; } });
++  pages.splice(i + 1, 0, {id: uid(), name: src.name ? uniquePageName(src.name + ' copy') : '', shapes, cam: src.cam ? {...src.cam} : null});
++  if (i < curPage) curPage++;
++  switchPage(i + 1, true);
++}
++function deletePage(i){
++  if (pages.length === 1){ toast('A board needs at least one page'); return; }
++  const pg = pages[i];
++  if (pg.shapes.length && !confirm(`Delete "${pageLabel(i)}" and everything on it?`)) return;
++  syncPage();
++  pages.splice(i, 1); delete histories[pg.id];
++  if (i === curPage){ curPage = -1; switchPage(Math.min(i, pages.length - 1), true); }
++  else { if (i < curPage) curPage--; updatePageUI(); save(); }
++}
++function movePage(i, dir){
++  const j = i + dir; if (j < 0 || j >= pages.length) return;
++  syncPage();
++  [pages[i], pages[j]] = [pages[j], pages[i]];
++  if (curPage === i) curPage = j; else if (curPage === j) curPage = i;
++  updatePageUI(); save();
++}
++const PI = p => `<svg viewBox="0 0 24 24">${p}</svg>`;
++function buildPagesPanel(){
++  $('#pagesPanel').innerHTML =
++    `<div class="pp-head"><span>Pages</span><button class="ibtn" data-pg="add" title="Add page">${PI('<path d="M12 5v14M5 12h14"/>')}</button></div>` +
++    pages.map((p, i) => `<div class="pp-item ${i === curPage ? 'active' : ''}" data-i="${i}"><span class="pp-num">${i + 1}</span><span class="pp-name" title="Double-click to name this page">${p.name ? esc(p.name) : `<span style="color:var(--muted);font-weight:400">Page ${i + 1} — add a name</span>`}</span><span class="pp-acts">` +
++      `<button data-pg="rename" title="Rename">${PI('<path d="M4 20h4L19 9l-4-4L4 16z"/>')}</button>` +
++      `<button data-pg="dup" title="Duplicate">${PI('<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>')}</button>` +
++      `<button data-pg="up" title="Move up">${PI('<path d="m6 15 6-6 6 6"/>')}</button>` +
++      `<button data-pg="down" title="Move down">${PI('<path d="m6 9 6 6 6-6"/>')}</button>` +
++      `<button data-pg="del" class="danger" title="Delete page">${PI('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>')}</button></span></div>`).join('');
++}
++function updatePageUI(){
++  $('#pageName').textContent = pageLabel(curPage);
++  $('#pageBtn').title = pageLabel(curPage) + ' — click for pages (PageUp / PageDown to switch)';
++  if ($('#pagesPanel').classList.contains('open')) buildPagesPanel();
++}
++function closePages(){ $('#pagesPanel').classList.remove('open'); $('#pageBtn').classList.remove('open'); }
++function renamePageInline(i){
++  const row = document.querySelector(`#pagesPanel .pp-item[data-i="${i}"]`); if (!row) return;
++  const name = row.querySelector('.pp-name'), inp = document.createElement('input');
++  inp.className = 'pp-input'; inp.value = pages[i].name; inp.placeholder = `Page ${i + 1} name, e.g. Mexico`; inp.maxLength = 60;
++  name.replaceWith(inp); inp.focus(); inp.select();
++  let done = false;
++  const finish = ok => {
++    if (done) return;
++    if (ok){
++      const v = normPageName(inp.value);
++      if (v && nameTaken(v, i)){                      // names must be unique
++        toast(`"${v}" is already used by another page`);
++        inp.style.borderColor = 'var(--danger)'; setTimeout(() => { inp.focus(); inp.select(); }, 0); return;
++      }
++      pages[i].name = v;
++    }
++    done = true; updatePageUI(); buildPagesPanel(); save();
++  };
++  inp.addEventListener('input', () => { inp.style.borderColor = ''; });
++  inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') finish(true); if (e.key === 'Escape'){ done = true; updatePageUI(); buildPagesPanel(); } });
++  inp.addEventListener('blur', () => { if (!done){ const v = normPageName(inp.value); if (v && nameTaken(v, i)){ done = true; updatePageUI(); buildPagesPanel(); } else finish(true); } });
++  inp.addEventListener('click', e => e.stopPropagation());
++}
++$('#pageBtn').addEventListener('click', e => {
++  e.stopPropagation(); closeMenu();
++  const P = $('#pagesPanel'), open = !P.classList.contains('open');
++  P.classList.toggle('open', open); $('#pageBtn').classList.toggle('open', open);
++  if (open){ const r = $('#pageBtn').getBoundingClientRect(); P.style.left = Math.max(10, Math.min(r.left - 6, innerWidth - 280)) + 'px'; buildPagesPanel(); }
++});
++$('#pagesPanel').addEventListener('click', e => {
++  e.stopPropagation();
++  const act = e.target.closest('[data-pg]')?.dataset.pg, row = e.target.closest('.pp-item'), i = row ? +row.dataset.i : -1;
++  if (act === 'add') return addPage();
++  if (act === 'rename') return renamePageInline(i);
++  if (act === 'dup') return duplicatePage(i);
++  if (act === 'up') return movePage(i, -1);
++  if (act === 'down') return movePage(i, 1);
++  if (act === 'del') return deletePage(i);
++  if (row && !e.target.closest('input')) switchPage(i);
++});
++$('#pagesPanel').addEventListener('dblclick', e => { const row = e.target.closest('.pp-item'); if (row && e.target.closest('.pp-name')) renamePageInline(+row.dataset.i); });
++document.addEventListener('click', e => { if (!e.target.closest('#pagesPanel') && !e.target.closest('#pageBtn')) closePages(); });
++
++/* ---------- camera ---------- */
++const toWorld = (sx, sy) => ({x: (sx - cam.x) / cam.z, y: (sy - cam.y) / cam.z});
++function zoomAt(sx, sy, factor){
++  const z = Math.min(8, Math.max(.1, cam.z * factor)), w = toWorld(sx, sy);
++  cam.z = z; cam.x = sx - w.x * z; cam.y = sy - w.y * z; render(); save();
++}
++function animateCam(to, ms = 260){
++  cancelAnimationFrame(camAnim);
++  const cx = innerWidth / 2, cy = innerHeight / 2, z0 = cam.z, z1 = to.z, t0 = performance.now();
++  const w0 = {x: (cx - cam.x) / z0, y: (cy - cam.y) / z0}, w1 = {x: (cx - to.x) / z1, y: (cy - to.y) / z1};
++  const step = now => {
++    const t = Math.min(1, (now - t0) / ms), k = 1 - Math.pow(1 - t, 3);
++    const z = z0 * Math.pow(z1 / z0, k);
++    cam = {x: cx - (w0.x + (w1.x - w0.x) * k) * z, y: cy - (w0.y + (w1.y - w0.y) * k) * z, z};
++    draw();
++    if (t < 1) camAnim = requestAnimationFrame(step); else save();
++  };
++  camAnim = requestAnimationFrame(step);
++}
++function zoomTo(z){
++  z = Math.min(8, Math.max(.1, z));
++  const w = toWorld(innerWidth / 2, innerHeight / 2);
++  animateCam({z, x: innerWidth / 2 - w.x * z, y: innerHeight / 2 - w.y * z});
++}
++function zoomFit(shapes = board.shapes, instant = false){
++  const b = union(shapes.map(hitBounds));
++  let to;
++  if (!b) to = {x: innerWidth / 2, y: innerHeight / 2, z: 1};
++  else {
++    const pad = 80, z = Math.min(2, Math.max(.1, Math.min((innerWidth - pad * 2) / Math.max(b.w, 1), (innerHeight - pad * 2 - 60) / Math.max(b.h, 1))));
++    to = {z, x: innerWidth / 2 - (b.x + b.w / 2) * z, y: (innerHeight - 40) / 2 - (b.y + b.h / 2) * z};
++  }
++  if (instant){ cam = to; render(); save(); } else animateCam(to);
++}
++
++/* ---------- shape factory ---------- */
++function makeShape(type, x, y, extra = {}){
++  const s = {id: uid(), type, x, y, w: 0, h: 0, color: style.color, fill: style.fill, dash: style.dash, size: style.size, fontSize: style.fontSize, text: ''};
++  if (type === 'note'){ s.color = style.color === 'black' ? 'yellow' : style.color; s.fill = 'solid'; }
++  if (type === 'zone'){ s.dash = 'dashed'; s.fill = 'semi'; s.size = 's'; s.fontSize = 'm'; s.text = 'Site / Zone'; s.color = style.color === 'black' ? 'grey' : style.color; }
++  if (type === 'device'){ s.kind = extra.kind || 'switch'; s.color = DEVICES[s.kind].color; s.fill = 'solid'; s.text = ''; s.info = ''; s.role = ''; }
++  if (type === 'cloud'){ s.fill = 'semi'; }
++  if (type === 'connector'){ s.arrows = extra.arrows ?? style.arrows; s.route = style.route; s.bend = 0; s.startLabel = ''; s.endLabel = ''; }
++  if (type === 'draw') s.pts = [[0, 0]];
++  return Object.assign(s, extra);
++}
++const DEFAULT_SIZE = {rect: [160, 100], ellipse: [140, 100], diamond: [140, 110], cloud: [200, 120], zone: [420, 280], note: [200, 200], device: [64, 64]};
++function addShape(s){
++  if (s.type === 'zone') board.shapes.unshift(s); else board.shapes.push(s);
++  return s;
++}
++function nextDeviceName(kind){
++  const base = {router: 'RTR', l3switch: 'L3SW', switch: 'SW', firewall: 'FW', lb: 'LB', server: 'SRV', ise: 'ISE', ap: 'AP', wlc: 'WLC', nte: 'NTE', pc: 'PC', phone: 'PHONE'}[kind] || 'DEV';
++  let n = 1; const names = new Set(board.shapes.map(s => s.text));
++  while (names.has(`${base}-${String(n).padStart(2, '0')}`)) n++;
++  return `${base}-${String(n).padStart(2, '0')}`;
++}
++const snapV = v => prefs.snap ? Math.round(v / 10) * 10 : v;
++/* alignment guides: snap edges/centres to nearby shapes */
++function snapTargets(exclude){
++  const xs = [], ys = [], vb = {x: -cam.x / cam.z, y: -cam.y / cam.z, w: innerWidth / cam.z, h: innerHeight / cam.z};
++  for (const s of board.shapes){
++    if (exclude.has(s.id) || s.type === 'connector') continue;
++    const b = bounds(s); if (!overlaps(b, vb)) continue;
++    for (const v of [b.x, b.x + b.w / 2, b.x + b.w]) xs.push({v, b});
++    for (const v of [b.y, b.y + b.h / 2, b.y + b.h]) ys.push({v, b});
++  }
++  return {xs, ys};
++}
++function snapAxis(cands, targets){
++  const thr = 6 / cam.z; let best = null;
++  for (const c of cands) for (const t of targets){ const d = t.v - c; if (Math.abs(d) < thr && (!best || Math.abs(d) < Math.abs(best.d))) best = {d, v: t.v}; }
++  return best;
++}
++function guideLines(box, sx, sy, T){
++  const g = [];
++  if (sx){ let y0 = box.y, y1 = box.y + box.h; for (const t of T.xs) if (Math.abs(t.v - sx.v) < .01){ y0 = Math.min(y0, t.b.y); y1 = Math.max(y1, t.b.y + t.b.h); } g.push({x1: sx.v, y1: y0, x2: sx.v, y2: y1}); }
++  if (sy){ let x0 = box.x, x1 = box.x + box.w; for (const t of T.ys) if (Math.abs(t.v - sy.v) < .01){ x0 = Math.min(x0, t.b.x); x1 = Math.max(x1, t.b.x + t.b.w); } g.push({x1: x0, y1: sy.v, x2: x1, y2: sy.v}); }
++  return g;
++}
++const guidesOn = e => prefs.guides && !(e && (e.ctrlKey || e.metaKey));
++function snapPoint(p, T, e, axes = 'xy'){
++  if (!T || !guidesOn(e)) return {x: p.x, y: p.y, guides: null};
++  const sx = axes.includes('x') ? snapAxis([p.x], T.xs) : null, sy = axes.includes('y') ? snapAxis([p.y], T.ys) : null;
++  const q = {x: p.x + (sx ? sx.d : 0), y: p.y + (sy ? sy.d : 0)};
++  return {...q, guides: guideLines({x: q.x, y: q.y, w: 0, h: 0}, sx, sy, T)};
++}
++function afterCreate(){ if (!toolLock) setTool('select', null, true); }
++
++/* ---------- pointer interaction ---------- */
++const svgEl = $('#canvas');
++svgEl.addEventListener('contextmenu', e => e.preventDefault());
++svgEl.addEventListener('pointerdown', onDown);
++window.addEventListener('pointermove', onMove);
++window.addEventListener('pointerup', onUp);
++window.addEventListener('pointercancel', onUp);
++
++function onDown(e){
++  closeMenu(); closePages(); cancelAnimationFrame(camAnim);
++  if (editing) finishEdit();
++  pointers.set(e.pointerId, {x: e.clientX, y: e.clientY});
++  try { svgEl.setPointerCapture(e.pointerId); } catch (_) {}
++  if (pointers.size === 2){
++    if (drag && drag.type === 'create'){ board.shapes = board.shapes.filter(s => s.id !== drag.id); sel.clear(); }
++    const [p1, p2] = [...pointers.values()];
++    drag = {type: 'pinch', d0: Math.hypot(p2.x - p1.x, p2.y - p1.y), c0: {x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2}, cam0: {...cam}};
++    return;
++  }
++  const p = toWorld(e.clientX, e.clientY);
++  if (e.button === 1 || tool === 'hand' || spaceDown){
++    drag = {type: 'pan', sx: e.clientX, sy: e.clientY, cx: cam.x, cy: cam.y}; svgEl.style.cursor = 'grabbing'; return;
++  }
++  if (e.button === 2) return;
++  const screen0 = {x: e.clientX, y: e.clientY};
++  if (tool === 'select'){
++    const h = hitHandle(p);
++    if (h){
++      if (h.kind === 'resize') drag = {type: 'resize', id: h.s.id, k: h.k, orig: JSON.parse(JSON.stringify(h.s)), ob: bounds(h.s), T: snapTargets(new Set([h.s.id]))};
++      else if (h.kind === 'endpoint') drag = {type: 'endpoint', id: h.s.id, which: h.which};
++      else drag = {type: 'bend', id: h.s.id};
++      return;
++    }
++    const hit = hitTest(p);
++    if (hit){
++      if (e.shiftKey){ sel.has(hit.id) ? sel.delete(hit.id) : sel.add(hit.id); }
++      else if (!sel.has(hit.id)){ sel = new Set([hit.id]); }
++      startMove(p, screen0, e.altKey);
++    } else {
++      if (!e.shiftKey) sel.clear();
++      drag = {type: 'marquee', start: p, cur: p, base: new Set(sel)};
++    }
++    render(); return;
++  }
++  const x = snapV(p.x), y = snapV(p.y);
++  if (tool === 'text'){
++    const s = addShape(makeShape('text', x, y - FONTS[style.fontSize] * .64));
++    e.preventDefault(); layoutText(s); sel = new Set([s.id]); afterCreate(); render(); startEdit(s); return;
++  }
++  if (tool === 'eraser'){
++    drag = {type: 'erase', ids: new Set(), last: p}; eraseAt(p); render(); return;
++  }
++  if (tool === 'draw'){
++    const pen = e.pointerType === 'pen';
++    const s = addShape(makeShape('draw', p.x, p.y)); s.pts = [pen ? [0, 0, r2(e.pressure || .5)] : [0, 0]];
++    drag = {type: 'draw', id: s.id, pen}; render(); return;
++  }
++  if (tool === 'arrow' || tool === 'link'){
++    const t = bindTarget(p);
++    const preset = tool === 'link' && toolArg && LINKS[toolArg] ? LINKS[toolArg] : null;
++    const s = addShape(makeShape('connector', 0, 0, {
++      start: t ? {id: t.id} : {x: p.x, y: p.y}, end: {x: p.x, y: p.y},
++      arrows: tool === 'link' ? 'none' : 'end',
++      ...(preset ? {color: preset.color, dash: preset.dash, size: preset.size} : {})
++    }));
++    sel = new Set([s.id]);
++    drag = {type: 'endpoint', id: s.id, which: 'end', creating: true, screen0};
++    render(); return;
++  }
++  // box shapes
++  const type = tool;
++  const extra = {};
++  if (tool === 'device') extra.kind = toolArg || 'switch';
++  if (tool === 'cloud' && toolArg){ const c = CLOUDS.find(c => c.label === toolArg); if (c){ extra.text = c.label; extra.color = c.color; } }
++  const s = addShape(makeShape(type, x, y, extra));
++  if (s.type === 'device') s.text = nextDeviceName(s.kind);
++  sel = new Set([s.id]);
++  const T = snapTargets(new Set([s.id]));
++  const sp = snapPoint({x, y}, T, e); s.x = sp.x; s.y = sp.y;
++  drag = {type: 'create', id: s.id, start: {x: sp.x, y: sp.y}, screen0, T};
++  render();
++}
++function startMove(p, screen0, alt){
++  if (alt){ // alt-drag duplicates
++    const copies = duplicate([...sel], 0); sel = new Set(copies);
++  }
++  const ids = new Set(sel);
++  for (const id of sel){ const s = byId(id); if (s && s.type === 'zone'){ const zb = bounds(s); for (const o of board.shapes) if (o.id !== s.id && o.type !== 'connector' && contains(zb, hitBounds(o))) ids.add(o.id); } }
++  for (const o of board.shapes) if (o.type === 'connector' && (sel.has(o.id) || (o.start.id && ids.has(o.start.id) && o.end.id && ids.has(o.end.id)) || (!o.start.id && !o.end.id && false))) ids.add(o.id);
++  const orig = {};
++  for (const id of ids){ const s = byId(id); if (s) orig[id] = JSON.parse(JSON.stringify(s)); }
++  const first = [...ids].map(byId).find(s => s && s.type !== 'connector');
++  const box0 = union([...ids].map(byId).filter(s => s && s.type !== 'connector').map(bounds));
++  drag = {type: 'move', start: p, screen0, orig, anchor: first ? bounds(first) : null, box0, T: snapTargets(ids), moved: false};
++}
++function onMove(e){
++  if (pointers.has(e.pointerId)) pointers.set(e.pointerId, {x: e.clientX, y: e.clientY});
++  const p = toWorld(e.clientX, e.clientY);
++  if (!drag){ updateHover(p); return; }
++  switch (drag.type){
++    case 'pinch': {
++      if (pointers.size < 2) return;
++      const [p1, p2] = [...pointers.values()], d = Math.hypot(p2.x - p1.x, p2.y - p1.y), c = {x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2};
++      const z = Math.min(8, Math.max(.1, drag.cam0.z * d / drag.d0)), w = {x: (drag.c0.x - drag.cam0.x) / drag.cam0.z, y: (drag.c0.y - drag.cam0.y) / drag.cam0.z};
++      cam.z = z; cam.x = c.x - w.x * z; cam.y = c.y - w.y * z; render(); break;
++    }
++    case 'pan': cam.x = drag.cx + e.clientX - drag.sx; cam.y = drag.cy + e.clientY - drag.sy; render(); break;
++    case 'marquee': {
++      drag.cur = p; const r = rectFrom(drag.start, p); sel = new Set(drag.base);
++      for (const s of board.shapes){ const b = hitBounds(s); if (s.type === 'zone' ? contains(r, b) : overlaps(r, b)) sel.add(s.id); }
++      render(); break;
++    }
++    case 'move': {
++      if (!drag.moved && Math.hypot(e.clientX - drag.screen0.x, e.clientY - drag.screen0.y) < 3) return;
++      drag.moved = true;
++      let dx = p.x - drag.start.x, dy = p.y - drag.start.y;
++      let lockX = false, lockY = false;
++      if (e.shiftKey){ if (Math.abs(dx) > Math.abs(dy)){ dy = 0; lockY = true; } else { dx = 0; lockX = true; } }
++      if (prefs.snap && drag.anchor){ dx = snapV(drag.anchor.x + dx) - drag.anchor.x; dy = snapV(drag.anchor.y + dy) - drag.anchor.y; }
++      drag.guides = null;
++      if (drag.box0 && guidesOn(e)){
++        const b = {x: drag.box0.x + dx, y: drag.box0.y + dy, w: drag.box0.w, h: drag.box0.h};
++        const sx = lockX ? null : snapAxis([b.x, b.x + b.w / 2, b.x + b.w], drag.T.xs), sy = lockY ? null : snapAxis([b.y, b.y + b.h / 2, b.y + b.h], drag.T.ys);
++        if (sx) dx += sx.d; if (sy) dy += sy.d;
++        drag.guides = guideLines({...b, x: b.x + (sx ? sx.d : 0), y: b.y + (sy ? sy.d : 0)}, sx, sy, drag.T);
++      }
++      for (const id in drag.orig){
++        const s = byId(id), o = drag.orig[id]; if (!s) continue;
++        if (s.type === 'connector'){
++          if (!o.start.id) s.start = {x: o.start.x + dx, y: o.start.y + dy};
++          if (!o.end.id) s.end = {x: o.end.x + dx, y: o.end.y + dy};
++        } else { s.x = o.x + dx; s.y = o.y + dy; }
++      }
++      render(); break;
++    }
++    case 'create': {
++      const s = byId(drag.id); if (!s) return;
++      if (Math.hypot(e.clientX - drag.screen0.x, e.clientY - drag.screen0.y) > 4) drag.moved = true;
++      if (!drag.moved) return;
++      const sp = snapPoint({x: snapV(p.x), y: snapV(p.y)}, drag.T, e); drag.guides = sp.guides;
++      let x1 = sp.x, y1 = sp.y, w = x1 - drag.start.x, h = y1 - drag.start.y;
++      if (e.shiftKey || s.type === 'device'){ const m = Math.max(Math.abs(w), Math.abs(h)); w = Math.sign(w || 1) * m; h = Math.sign(h || 1) * m; }
++      s.x = Math.min(drag.start.x, drag.start.x + w); s.y = Math.min(drag.start.y, drag.start.y + h); s.w = Math.abs(w); s.h = Math.abs(h);
++      render(); break;
++    }
++    case 'erase': {
++      const steps = Math.max(1, Math.ceil(Math.hypot(p.x - drag.last.x, p.y - drag.last.y) * cam.z / 4));
++      for (let i = 1; i <= steps; i++) eraseAt({x: drag.last.x + (p.x - drag.last.x) * i / steps, y: drag.last.y + (p.y - drag.last.y) * i / steps});
++      drag.last = p; render(); break;
++    }
++    case 'draw': {
++      const s = byId(drag.id); if (!s) return;
++      const evs = (e.getCoalescedEvents && e.getCoalescedEvents()) || []; let added = false;
++      for (const ev of (evs.length ? evs : [e])){
++        const q = toWorld(ev.clientX, ev.clientY), last = s.pts[s.pts.length - 1], nx = q.x - s.x, ny = q.y - s.y;
++        if (Math.hypot(nx - last[0], ny - last[1]) * cam.z > 1){ const pt = [r2(nx), r2(ny)]; if (drag.pen) pt.push(r2(ev.pressure || .5)); s.pts.push(pt); added = true; }
++      }
++      if (added) render();
++      break;
++    }
++    case 'endpoint': {
++      const s = byId(drag.id); if (!s) return;
++      if (drag.screen0 && Math.hypot(e.clientX - drag.screen0.x, e.clientY - drag.screen0.y) > 4) drag.moved = true;
++      const other = drag.which === 'end' ? s.start : s.end;
++      let t = e.ctrlKey || e.metaKey ? null : bindTarget(p);
++      if (t && other.id === t.id) t = null;
++      hoverId = t ? t.id : null;
++      s[drag.which] = t ? {id: t.id} : {x: p.x, y: p.y};
++      render(); break;
++    }
++    case 'bend': {
++      const s = byId(drag.id); const g0 = connGeom({...s, bend: 0});
++      if (s.route === 'elbow') s.bend = r2((g0.axis === 'x' ? p.x : p.y) - g0.nat);
++      else { const b = (p.x - g0.m.x) * g0.n.x + (p.y - g0.m.y) * g0.n.y; s.bend = Math.abs(b) < 6 / cam.z ? 0 : r2(b); }
++      render(); break;
++    }
++    case 'resize': doResize(p, e.shiftKey, e); render(); break;
++  }
++}
++function doResize(p, shift, e){
++  const s = byId(drag.id), o = drag.orig, ob = drag.ob, k = drag.k;
++  let x0 = ob.x, y0 = ob.y, x1 = ob.x + ob.w, y1 = ob.y + ob.h;
++  const axes = (k.includes('w') || k.includes('e') ? 'x' : '') + (k.includes('n') || k.includes('s') ? 'y' : '');
++  const sp = snapPoint({x: snapV(p.x), y: snapV(p.y)}, drag.T, e, axes); drag.guides = sp.guides;
++  const px = sp.x, py = sp.y;
++  if (k.includes('w')) x0 = px; if (k.includes('e')) x1 = px;
++  if (k.includes('n')) y0 = py; if (k.includes('s')) y1 = py;
++  let nb = {x: Math.min(x0, x1), y: Math.min(y0, y1), w: Math.max(8, Math.abs(x1 - x0)), h: Math.max(8, Math.abs(y1 - y0))};
++  const keep = shift || s.type === 'device';
++  if (keep && ob.w && ob.h){
++    const r = ob.w / ob.h;
++    if (k === 'n' || k === 's') nb.w = nb.h * r; else if (k === 'e' || k === 'w') nb.h = nb.w / r;
++    else if (nb.w / nb.h > r) nb.h = nb.w / r; else nb.w = nb.h * r;
++    if (k.includes('w')) nb.x = ob.x + ob.w - nb.w;
++    if (k.includes('n')) nb.y = ob.y + ob.h - nb.h;
++    if (k === 'n' || k === 's') nb.x = ob.x + (ob.w - nb.w) / 2;
++    if (k === 'e' || k === 'w') nb.y = ob.y + (ob.h - nb.h) / 2;
++  }
++  if (s.type === 'draw'){
++    const sx = nb.w / (ob.w || 1), sy = nb.h / (ob.h || 1);
++    s.pts = o.pts.map(([x, y, ...r]) => [r2((o.x + x - ob.x) * sx), r2((o.y + y - ob.y) * sy), ...r]);
++    s.x = nb.x; s.y = nb.y;
++  } else Object.assign(s, nb);
++}
++function onUp(e){
++  pointers.delete(e.pointerId);
++  if (!drag) return;
++  const d = drag; drag = null; hoverId = null;
++  if (d.type === 'pinch'){ if (pointers.size) drag = null; save(); render(); return; }
++  if (d.type === 'pan'){ svgEl.style.cursor = cursorFor(); save(); return; }
++  if (d.type === 'create'){
++    const s = byId(d.id);
++    if (s && !d.moved){ const [w, h] = DEFAULT_SIZE[s.type] || [120, 80]; s.w = w; s.h = h; s.x = snapV(d.start.x - w / 2); s.y = snapV(d.start.y - h / 2); }
++    else if (s){ const min = s.type === 'device' ? 32 : 16; if (s.w < min) s.w = min; if (s.h < min) s.h = min; }
++    afterCreate();
++  }
++  if (d.type === 'erase'){
++    if (d.ids.size){ sel = new Set(d.ids); deleteSel(); }
++    render(); return;
++  }
++  if (d.type === 'draw'){
++    const s = byId(d.id); const b = polyBounds(s.pts.map(([x, y]) => ({x, y})));
++    s.pts = s.pts.map(([x, y, ...r]) => [r2(x - b.x), r2(y - b.y), ...r]); s.x += b.x; s.y += b.y; s.w = b.w; s.h = b.h;
++  }
++  if (d.type === 'endpoint' && d.creating){
++    const s = byId(d.id);
++    if (!d.moved){ board.shapes = board.shapes.filter(x => x.id !== d.id); sel.clear(); }
++    afterCreate();
++    if (s && d.moved && s.arrows === 'none' && s.start.id && s.end.id){ /* network link done */ }
++  }
++  if (d.type === 'move' && !d.moved) { render(); return; }
++  commit(); render();
++}
++function updateHover(p){
++  let cur = cursorFor();
++  if (tool === 'select'){
++    const h = hitHandle(p);
++    if (h){ cur = h.kind === 'resize' ? ({n: 'ns', s: 'ns', e: 'ew', w: 'ew', nw: 'nwse', se: 'nwse', ne: 'nesw', sw: 'nesw'}[h.k] + '-resize') : 'pointer'; }
++    const hit = h ? null : hitTest(p), id = hit ? hit.id : null;
++    if (id !== hoverId){ hoverId = id; render(); }
++  }
++  else if ((tool === 'arrow' || tool === 'link')){ const t = bindTarget(p); const id = t ? t.id : null; if (id !== hoverId){ hoverId = id; render(); } }
++  else if (hoverId){ hoverId = null; render(); }
++  svgEl.style.cursor = cur;
++}
++function cursorFor(){
++  if (spaceDown || tool === 'hand') return 'grab';
++  if (tool === 'select') return 'default';
++  if (tool === 'text') return 'text';
++  if (tool === 'eraser') return `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'20\' height=\'20\'><circle cx=\'10\' cy=\'10\' r=\'6\' fill=\'white\' stroke=\'black\' stroke-width=\'1.5\'/></svg>')}") 10 10, crosshair`;
++  return 'crosshair';
++}
++svgEl.addEventListener('wheel', e => {
++  e.preventDefault(); cancelAnimationFrame(camAnim);
++  if (e.ctrlKey || e.metaKey) zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * (e.deltaMode ? .05 : .01)));
++  else { const k = e.deltaMode ? 20 : 1; cam.x -= (e.shiftKey && !e.deltaX ? e.deltaY : e.deltaX) * k; cam.y -= (e.shiftKey && !e.deltaX ? 0 : e.deltaY) * k; render(); save(); }
++}, {passive: false});
++svgEl.addEventListener('dblclick', e => {
++  const p = toWorld(e.clientX, e.clientY);
++  const s = hitTest(p);
++  if (s && s.type !== 'draw'){ sel = new Set([s.id]); startEdit(s); return; }
++  if (!s && tool === 'select'){
++    const t = addShape(makeShape('text', p.x, p.y - FONTS[style.fontSize] * .64)); layoutText(t);
++    sel = new Set([t.id]); render(); startEdit(t);
++  }
++});
++
++/* ---------- inline text editing ---------- */
++function startEdit(s, field = 'text', defer = false){
++  if (editing) finishEdit();
++  const single = s.type === 'device' || s.type === 'zone';
++  const ta = document.createElement('textarea');
++  ta.className = 'editor' + (s.type === 'connector' ? ' pill' : '');
++  ta.value = s[field] || ''; ta.spellcheck = false; ta.rows = 1;
++  $('#editors').appendChild(ta);
++  editing = {id: s.id, field, el: ta, single};
++  ta.addEventListener('input', () => { const sh = byId(editing.id); sh[field] = ta.value; if (sh.type === 'text') layoutText(sh); render(); });
++  ta.addEventListener('keydown', ev => {
++    ev.stopPropagation();
++    if (ev.key === 'Escape' || (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) || (ev.key === 'Enter' && single && !ev.shiftKey)){ ev.preventDefault(); finishEdit(); }
++  });
++  ta.addEventListener('blur', () => setTimeout(() => { if (editing && editing.el === ta) finishEdit(); }, 0));
++  render(); positionEditor();
++  if (!defer){ ta.focus(); ta.select(); }
++  else setTimeout(() => { ta.focus(); ta.select(); }, 0);
++}
++function positionEditor(){
++  if (!editing) return;
++  const s = byId(editing.id); if (!s){ finishEdit(); return; }
++  const ta = editing.el, z = cam.z;
++  let fs = FONTS[s.fontSize || 'm'], cx, cy, w, align = 'center', top = false, weight = 400, color = col(s.color);
++  if (s.type === 'text'){ cx = s.x; cy = s.y; w = Math.max(s.w + fs, 40); align = 'left'; top = true; }
++  else if (s.type === 'device'){ fs = 14; weight = 600; cx = s.x + s.w / 2; cy = s.y + s.h + 16; w = Math.max(180, s.w + 60); color = TEXT(); }
++  else if (s.type === 'zone'){ fs = Math.min(fs, 20); weight = 600; cx = s.x + 14; cy = s.y + 20; w = s.w - 28; align = 'left'; }
++  else if (s.type === 'connector'){ const g = connGeom(s); fs = Math.round(fs * .72); weight = 500; cx = g.mid.x; cy = g.mid.y; w = 220; }
++  else if (s.type === 'note'){ cx = s.x + s.w / 2; cy = s.y + s.h / 2; w = s.w - 28; color = TEXT(); }
++  else { cx = s.x + s.w / 2; cy = s.y + s.h / 2; w = s.type === 'rect' ? s.w - 24 : s.type === 'diamond' ? s.w * .5 : s.w * .62; weight = s.type === 'cloud' ? 600 : 400; }
++  ta.style.fontSize = fs * z + 'px'; ta.style.fontWeight = weight; ta.style.color = color; ta.style.textAlign = align;
++  ta.style.width = Math.max(w, 30) * z + 'px'; ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px';
++  const W = Math.max(w, 30) * z, H = ta.scrollHeight;
++  const sx = cx * z + cam.x, sy = cy * z + cam.y;
++  ta.style.left = (align === 'left' ? sx : sx - W / 2) + 'px';
++  ta.style.top = (top ? sy : sy - (align === 'left' && s.type === 'zone' ? fs * z * .64 : H / 2)) + 'px';
++}
++function finishEdit(){
++  if (!editing) return;
++  const {id, el} = editing; editing = null; el.remove();
++  const s = byId(id);
++  if (s && s.type === 'text' && !String(s.text).trim()){ board.shapes = board.shapes.filter(x => x.id !== id); sel.delete(id); }
++  panelKey = ''; commit(); render();
++}
++
++/* ---------- operations ---------- */
++function deleteSel(){
++  if (!sel.size) return;
++  const gone = new Set(sel);
++  board.shapes = board.shapes.filter(s => !gone.has(s.id) && !(s.type === 'connector' && (gone.has(s.start.id) || gone.has(s.end.id))));
++  sel.clear(); commit(); render();
++}
++function cloneShapes(ids){
++  const set = new Set(ids);
++  const shapes = board.shapes.filter(s => set.has(s.id));
++  for (const c of board.shapes) if (c.type === 'connector' && !set.has(c.id) && set.has(c.start.id) && set.has(c.end.id)) shapes.push(c);
++  return JSON.parse(JSON.stringify(shapes));
++}
++function pasteShapes(shapes, offset = 24, at = null){
++  const map = {};
++  shapes.forEach(s => map[s.id] = uid());
++  let dx = offset, dy = offset;
++  if (at){ const b = union(shapes.filter(s => s.type !== 'connector').map(hitBounds)); if (b){ dx = at.x - (b.x + b.w / 2); dy = at.y - (b.y + b.h / 2); } }
++  const out = [];
++  for (const s0 of shapes){
++    const s = JSON.parse(JSON.stringify(s0)); s.id = map[s0.id];
++    if (s.type === 'connector'){
++      for (const k of ['start', 'end']){
++        if (s[k].id && map[s[k].id]) s[k] = {id: map[s[k].id]};
++        else if (s[k].id){ const g = connGeom(s0); const pt = k === 'start' ? g.a : g.b; s[k] = {x: pt.x + dx, y: pt.y + dy}; }
++        else s[k] = {x: s[k].x + dx, y: s[k].y + dy};
++      }
++    } else { s.x += dx; s.y += dy; }
++    addShape(s); out.push(s.id);
++  }
++  return out;
++}
++function duplicate(ids, offset = 24){ return pasteShapes(cloneShapes(ids), offset); }
++function copySel(cut){
++  if (!sel.size) return;
++  clip = cloneShapes([...sel]);
++  const txt = JSON.stringify({app: 'idea-board', shapes: clip});
++  try { navigator.clipboard && navigator.clipboard.writeText(txt).catch(() => {}); } catch (_) {}
++  if (cut) deleteSel();
++}
++function paste(data){
++  const shapes = data || clip; if (!shapes || !shapes.length) return;
++  const c = toWorld(innerWidth / 2, innerHeight / 2);
++  sel = new Set(pasteShapes(shapes, 0, lastMouse ? toWorld(lastMouse.x, lastMouse.y) : c)); commit(); render();
++}
++let lastMouse = null;
++window.addEventListener('pointermove', e => { lastMouse = {x: e.clientX, y: e.clientY}; });
++function reorder(dir){
++  const ids = new Set(sel); if (!ids.size) return;
++  const moving = board.shapes.filter(s => ids.has(s.id)), rest = board.shapes.filter(s => !ids.has(s.id));
++  board.shapes = dir === 'front' ? [...rest, ...moving] : [...moving, ...rest];
++  commit(); render();
++}
++function align(how){
++  const shapes = [...sel].map(byId).filter(s => s && s.type !== 'connector'); if (shapes.length < 2) return;
++  const B = union(shapes.map(bounds));
++  if (how.startsWith('dist')){
++    const hz = how === 'dist-h', key = hz ? 'x' : 'y', dim = hz ? 'w' : 'h';
++    const sorted = shapes.slice().sort((a, b) => bounds(a)[key] - bounds(b)[key]);
++    const total = sorted.reduce((a, s) => a + bounds(s)[dim], 0), gap = (B[dim] - total) / (sorted.length - 1);
++    let pos = B[key];
++    for (const s of sorted){ const b = bounds(s); s[key] += pos - b[key]; pos += b[dim] + gap; }
++  } else for (const s of shapes){
++    const b = bounds(s);
++    if (how === 'left') s.x += B.x - b.x; if (how === 'right') s.x += B.x + B.w - b.x - b.w; if (how === 'ch') s.x += B.x + B.w / 2 - b.x - b.w / 2;
++    if (how === 'top') s.y += B.y - b.y; if (how === 'bottom') s.y += B.y + B.h - b.y - b.h; if (how === 'cv') s.y += B.y + B.h / 2 - b.y - b.h / 2;
++  }
++  commit(); render();
++}
++function nudge(dx, dy){ for (const id of sel){ const s = byId(id); if (!s) continue; if (s.type === 'connector'){ if (!s.start.id){ s.start.x += dx; s.start.y += dy; } if (!s.end.id){ s.end.x += dx; s.end.y += dy; } } else { s.x += dx; s.y += dy; } } commit(); render(); }
++
++/* ---------- toolbar ---------- */
++const I = p => `<svg viewBox="0 0 24 24">${p}</svg>`;
++const TOOLS = [
++  ['select', 'V', 'Select', I('<path d="M6 3.5 18.5 11l-5.6 1.6L10 18.5z"/>')],
++  ['hand', 'H', 'Hand (or hold Space)', I('<path d="M18 11.5V7a1.5 1.5 0 0 0-3 0v4M15 10.5V5a1.5 1.5 0 0 0-3 0v5.5M12 10V5.5a1.5 1.5 0 0 0-3 0V13l-1.8-1.8a1.6 1.6 0 0 0-2.3 2.2L9 18c1.3 1.5 2.8 2.5 5 2.5a5 5 0 0 0 5-5v-4a1.5 1.5 0 0 0-3 0"/>')],
++  ['draw', 'P', 'Pencil (freehand)', I('<path d="M4 20l1-4.5L15.5 5a2.1 2.1 0 0 1 3 0l.5.5a2.1 2.1 0 0 1 0 3L8.5 19z"/><path d="M13.5 7l3.5 3.5M5 15.5 8.5 19"/>')],
++  ['eraser', 'E', 'Eraser (drag over shapes)', I('<path d="M8 20h12M5.5 14.5l8.8-8.8a2 2 0 0 1 2.8 0l2.2 2.2a2 2 0 0 1 0 2.8L11 19H8.4a2 2 0 0 1-1.4-.6l-1.5-1.5a2 2 0 0 1 0-2.4z"/><path d="M9.5 10.5l5 5"/>')],
++  ['sep'],
++  ['link', 'L', 'Link (no arrowhead)', I('<path d="M6.5 17.5 17.5 6.5"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/>')],
++  ['arrow', 'A', 'Arrow', I('<path d="M5 19 19 5M9 5h10v10"/>')],
++  ['text', 'T', 'Text', I('<path d="M5 7V5h14v2M12 5v14M9 19h6"/>')],
++  ['note', 'N', 'Sticky note', I('<path d="M4 4h16v10l-6 6H4zM14 20v-6h6"/>')],
++  ['sep'],
++  ['rect', 'R', 'Rectangle', I('<rect x="4" y="5.5" width="16" height="13" rx="2"/>')],
++  ['ellipse', 'O', 'Ellipse', I('<ellipse cx="12" cy="12" rx="8.5" ry="7"/>')],
++  ['diamond', 'D', 'Diamond', I('<path d="m12 3 9 9-9 9-9-9z"/>')],
++  ['cloud', 'C', 'Cloud / WAN', I('<path d="M7 18.5h10a4 4 0 0 0 .6-8A6 6 0 0 0 6.2 9.8 4.4 4.4 0 0 0 7 18.5z"/>')],
++  ['zone', 'F', 'Zone / site frame', I('<rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke-dasharray="3 2.5"/><path d="M7 8.5h5"/>')],
++  ['sep', 'devsep'],
++  ['device:router', '1', 'Router', null], ['device:l3switch', '2', 'L3 switch', null], ['device:switch', '3', 'Switch', null], ['device:firewall', '4', 'Firewall', null], ['device:server', '5', 'Server', null],
++];
++function miniDevice(kind, size = 20){
++  return `<svg viewBox="-2 -2 52 52" width="${size}" height="${size}" style="fill:initial;stroke:initial">${deviceIcon(kind, 0, 0, 48, 48, DEVICES[kind].color, 'solid')}</svg>`;
++}
++function buildToolbar(){
++  $('#toolbar').innerHTML = TOOLS.map(t => {
++    if (t[0] === 'sep') return `<span class="sep${t[1] ? ' ' + t[1] : ''}"></span>`;
++    const [id, key, name, icon] = t;
++    const ic = id.startsWith('device:') ? miniDevice(id.slice(7), 22) : icon;
++    return `<button class="ibtn" data-tool="${id}" title="${name} (${key})">${ic}<span class="kbd">${key}</span></button>`;
++  }).join('') + `<span class="sep"></span><button class="ibtn" id="lockBtn" title="Tool lock (Q) — keep the tool after drawing">${I('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>')}<span class="kbd">Q</span></button>`;
++}
++function layoutChrome(){                 // keep the toolbar and the zoom/undo panel from overlapping
++  const tb = $('#toolbar'), bl = $('#bottomleft');
++  bl.classList.remove('stacked'); document.body.classList.remove('stacked');
++  const t = tb.getBoundingClientRect(), b = bl.getBoundingClientRect();
++  const st = t.left < b.right + 8; bl.classList.toggle('stacked', st); document.body.classList.toggle('stacked', st);
++}
++window.addEventListener('resize', layoutChrome);
++function updateToolbar(){
++  const cur = tool === 'device' ? 'device:' + toolArg : tool;
++  document.querySelectorAll('#toolbar [data-tool]').forEach(b => b.classList.toggle('active', b.dataset.tool === cur));
++  document.querySelectorAll('#library [data-lib]').forEach(b => b.classList.toggle('active', b.dataset.lib === `${tool}:${toolArg || ''}`));
++  $('#libBtn').classList.toggle('active', prefs.library);
++  const lb = $('#lockBtn'); if (lb) lb.classList.toggle('active', toolLock);
++}
++function setTool(t, arg = null, keepSel = false){
++  if (editing) finishEdit();
++  tool = t; toolArg = arg;
++  if (!keepSel && t !== 'select') sel.clear();
++  svgEl.style.cursor = cursorFor(); panelKey = ''; render();
++}
++$('#toolbar').addEventListener('click', e => {
++  if (e.target.closest('#lockBtn')){ toolLock = !toolLock; toast('Tool lock ' + (toolLock ? 'on' : 'off')); updateToolbar(); return; }
++  const b = e.target.closest('[data-tool]'); if (!b) return;
++  const t = b.dataset.tool;
++  if (t.startsWith('device:')) setTool('device', t.slice(7)); else setTool(t);
++});
++
++/* ---------- library ---------- */
++function linkSwatch(l){
++  const c = col(l.color), sw = SIZES[l.size];
++  const da = l.dash === 'dashed' ? `stroke-dasharray="${sw * 3.2} ${sw * 2.6}"` : l.dash === 'dotted' ? `stroke-dasharray="0.1 ${sw * 2.4}"` : '';
++  return `<svg viewBox="0 0 46 12"><path d="M3 6h40" stroke="${c}" stroke-width="${sw}" stroke-linecap="round" ${da}/></svg>`;
++}
++function buildLibrary(){
++  const lib = $('#library');
++  lib.innerHTML =
++    `<h4>Network devices</h4><div class="libgrid">` +
++    Object.entries(DEVICES).map(([k, d]) => `<button class="libitem" draggable="true" data-lib="device:${k}" title="Click, then click on the canvas — or drag it in">${miniDevice(k, 34)}<span>${d.name}</span></button>`).join('') +
++    `</div><h4>WAN & clouds</h4><div class="libgrid">` +
++    CLOUDS.map(c => `<button class="libitem" draggable="true" data-lib="cloud:${c.label}"><svg viewBox="0 0 60 40"><path d="${cloudPath(3, 3, 54, 34)}" fill="${col(c.color)}" fill-opacity=".14" stroke="${col(c.color)}" stroke-width="2"/></svg><span>${c.label}</span></button>`).join('') +
++    `<button class="libitem" draggable="true" data-lib="zone:"><svg viewBox="0 0 60 40"><rect x="4" y="4" width="52" height="32" rx="6" fill="${col('grey')}" fill-opacity=".08" stroke="${col('grey')}" stroke-width="1.5" stroke-dasharray="4 3"/><path d="M10 12h16" stroke="${col('grey')}" stroke-width="2.5" stroke-linecap="round"/></svg><span>Zone / Site</span></button>` +
++    `<button class="libitem" draggable="true" data-lib="note:"><svg viewBox="0 0 40 40"><rect x="6" y="6" width="28" height="28" rx="3" fill="${noteBg('yellow')}"/></svg><span>Note</span></button>` +
++    `</div><h4>Links — drag between devices</h4>` +
++    Object.entries(LINKS).map(([k, l]) => `<button class="linkrow" data-lib="link:${k}">${linkSwatch(l)}<span>${l.name}</span></button>`).join('');
++  updateToolbar();
++}
++$('#library').addEventListener('click', e => {
++  const b = e.target.closest('[data-lib]'); if (!b) return;
++  const [t, arg] = b.dataset.lib.split(':');
++  if (tool === t && (toolArg || '') === arg) setTool('select'); else setTool(t, arg || null);
++});
++$('#library').addEventListener('dragstart', e => {
++  const b = e.target.closest('[data-lib]'); if (!b) return;
++  e.dataTransfer.setData('text/x-ideaboard-lib', b.dataset.lib); e.dataTransfer.effectAllowed = 'copy';
++});
++svgEl.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
++svgEl.addEventListener('drop', e => {
++  e.preventDefault();
++  const lib = e.dataTransfer.getData('text/x-ideaboard-lib');
++  const p = toWorld(e.clientX, e.clientY);
++  if (lib){
++    const [t, arg] = lib.split(':'); if (t === 'link') return;
++    const extra = {};
++    if (t === 'device') extra.kind = arg;
++    if (t === 'cloud'){ const c = CLOUDS.find(c => c.label === arg); if (c){ extra.text = c.label; extra.color = c.color; } }
++    const s = addShape(makeShape(t, 0, 0, extra));
++    if (s.type === 'device') s.text = nextDeviceName(s.kind);
++    const [w, h] = DEFAULT_SIZE[t] || [120, 80];
++    s.w = w; s.h = h; s.x = snapV(p.x - w / 2); s.y = snapV(p.y - h / 2);
++    sel = new Set([s.id]); setTool('select', null, true); commit(); render(); return;
++  }
++  const f = e.dataTransfer.files && e.dataTransfer.files[0];
++  if (f) openFile(f);
++});
++$('#libBtn').addEventListener('click', () => { prefs.library = !prefs.library; $('#library').classList.toggle('open', prefs.library); savePrefs(); updateToolbar(); });
++
++/* ---------- style panel ---------- */
++const DASH_ICONS = {draw: '<path d="M3 9.5c2.5-3 4.5-2 6.5-1s4 1.5 6.5-1.5" stroke-width="2.2"/>', solid: '<path d="M3 8h16"/>', dashed: '<path d="M3 8h16" stroke-dasharray="4 3"/>', dotted: '<path d="M3 8h16" stroke-dasharray="0.1 3.4" stroke-width="2.4"/>'};
++const FILL_ICONS = {none: '<rect x="5" y="2" width="12" height="12" rx="2"/>', semi: '<rect x="5" y="2" width="12" height="12" rx="2" fill="currentColor" fill-opacity=".25"/>', solid: '<rect x="5" y="2" width="12" height="12" rx="2" fill="currentColor" fill-opacity=".6"/>'};
++const AI = p => `<svg viewBox="0 0 24 24">${p}</svg>`;
++function seg(key, opts, cur){
++  return `<div class="seg">${opts.map(([v, label]) => `<button data-set="${key}" data-v="${v}" class="${String(cur) === String(v) ? 'active' : ''}" title="${v}">${label}</button>`).join('')}</div>`;
++}
++function buildPanel(){
++  const P = $('#stylePanel');
++  const shapes = [...sel].map(byId).filter(Boolean);
++  const creating = ['rect', 'ellipse', 'diamond', 'cloud', 'zone', 'note', 'text', 'draw', 'arrow', 'link'].includes(tool);
++  if (!shapes.length && !creating){ P.innerHTML = ''; return; }
++  const types = new Set(shapes.length ? shapes.map(s => s.type) : [tool === 'arrow' || tool === 'link' ? 'connector' : tool]);
++  const first = shapes[0] || {...style, type: [...types][0]};
++  const has = (...t) => t.some(x => types.has(x));
++  let h = '';
++  // colors
++  h += `<div class="sp-sec"><div class="swatches">${Object.keys(COLORS).map(c => `<button class="sw ${first.color === c ? 'active' : ''}" data-set="color" data-v="${c}" title="${c}"><i style="background:${col(c)}"></i></button>`).join('')}</div></div>`;
++  if (has('rect', 'ellipse', 'diamond', 'cloud', 'zone', 'device'))
++    h += `<div class="sp-sec"><div class="sp-lbl">Fill</div>${seg('fill', Object.entries(FILL_ICONS).map(([k, v]) => [k, `<svg viewBox="0 0 22 16">${v}</svg>`]), first.fill)}</div>`;
++  if (has('rect', 'ellipse', 'diamond', 'cloud', 'zone', 'connector', 'draw')){
++    h += `<div class="sp-sec"><div class="sp-lbl">Stroke</div>${seg('dash', Object.entries(DASH_ICONS).map(([k, v]) => [k, `<svg viewBox="0 0 22 16">${v}</svg>`]), first.dash)}`;
++    h += `<div style="height:6px"></div>${seg('size', [['s', 'S'], ['m', 'M'], ['l', 'L'], ['xl', 'XL']], first.size)}</div>`;
++  }
++  if (has('rect', 'ellipse', 'diamond', 'cloud', 'zone', 'note', 'text', 'connector'))
++    h += `<div class="sp-sec"><div class="sp-lbl">Font size</div>${seg('fontSize', [['s', 'S'], ['m', 'M'], ['l', 'L'], ['xl', 'XL']], first.fontSize)}</div>`;
++  if (has('connector')){
++    const c = first;
++    h += `<div class="sp-sec"><div class="sp-lbl">Line</div>${seg('route', [['straight', 'Straight'], ['elbow', 'Elbow']], c.route || 'straight')}<div style="height:6px"></div>` +
++         seg('arrows', [['none', '—'], ['end', '→'], ['both', '↔']], c.arrows || 'none') + `</div>`;
++    h += `<div class="sp-sec"><div class="sp-lbl">Link type</div><div class="presets">${Object.entries(LINKS).map(([k, l]) => `<button data-preset="${k}" title="${l.name}"><b style="border-color:${col(l.color)};border-top-style:${l.dash === 'solid' ? 'solid' : l.dash};border-top-width:${Math.max(2, SIZES[l.size])}px"></b>${l.name.split(' ')[0]}</button>`).join('')}</div></div>`;
++    if (shapes.length === 1)
++      h += `<div class="sp-sec"><div class="sp-lbl">Link details</div>` +
++        `<input class="field" data-prop="text" placeholder="Label (e.g. 10G · Po10 · CCT-12345)" value="${esc(c.text)}">` +
++        `<input class="field" data-prop="startLabel" placeholder="A-end port (e.g. Te1/1/1)" value="${esc(c.startLabel)}">` +
++        `<input class="field" data-prop="endLabel" placeholder="B-end port (e.g. Eth1/49)" value="${esc(c.endLabel)}"></div>`;
++  }
++  if (has('device') && shapes.length === 1){
++    const d = first;
++    h += `<div class="sp-sec"><div class="sp-lbl">Device</div>` +
++      `<input class="field" data-prop="text" placeholder="Hostname" value="${esc(d.text)}">` +
++      `<textarea class="field" data-prop="info" placeholder="Mgmt IP, model, code version…">${esc(d.info)}</textarea>` +
++      `<div class="sp-row" style="margin-top:0"><select class="field" data-prop="kind">${Object.entries(DEVICES).map(([k, v]) => `<option value="${k}" ${d.kind === k ? 'selected' : ''}>${v.name}</option>`).join('')}</select>` +
++      `<select class="field" data-prop="role" title="Layer / role badge">${Object.keys(ROLES).map(r => `<option value="${r}" ${d.role === r ? 'selected' : ''}>${r || 'No role'}</option>`).join('')}</select></div></div>`;
++  }
++  if (shapes.length){
++    h += `<div class="sp-sec"><div class="sp-lbl">Arrange</div><div class="acts">` +
++      `<button data-act="front" title="Bring to front (])">${AI('<rect x="8" y="8" width="12" height="12" rx="2" fill="currentColor" fill-opacity=".3"/><path d="M4 16V5a1 1 0 0 1 1-1h11"/>')}</button>` +
++      `<button data-act="back" title="Send to back ([)">${AI('<rect x="4" y="4" width="12" height="12" rx="2"/><path d="M20 8v11a1 1 0 0 1-1 1H8"/>')}</button>` +
++      `<button data-act="dup" title="Duplicate (Ctrl D)">${AI('<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>')}</button>` +
++      `<button data-act="del" class="danger" title="Delete (Del)">${AI('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>')}</button></div>`;
++    if (shapes.filter(s => s.type !== 'connector').length > 1)
++      h += `<div class="acts" style="margin-top:4px">` +
++        `<button data-act="al-left" title="Align left">${AI('<path d="M4 3v18M8 7h10M8 12h6M8 17h12"/>')}</button>` +
++        `<button data-act="al-ch" title="Align centre">${AI('<path d="M12 3v18M6 7h12M8 12h8M5 17h14"/>')}</button>` +
++        `<button data-act="al-right" title="Align right">${AI('<path d="M20 3v18M6 7h10M10 12h6M4 17h12"/>')}</button>` +
++        `<button data-act="dist-h" title="Distribute horizontally">${AI('<path d="M4 4v16M20 4v16"/><rect x="9" y="8" width="6" height="8" rx="1"/>')}</button>` +
++        `<button data-act="al-top" title="Align top">${AI('<path d="M3 4h18M7 8v10M12 8v6M17 8v12"/>')}</button>` +
++        `<button data-act="al-cv" title="Align middle">${AI('<path d="M3 12h18M7 6v12M12 8v8M17 5v14"/>')}</button>` +
++        `<button data-act="al-bottom" title="Align bottom">${AI('<path d="M3 20h18M7 6v10M12 10v6M17 4v12"/>')}</button>` +
++        `<button data-act="dist-v" title="Distribute vertically">${AI('<path d="M4 4h16M4 20h16"/><rect x="8" y="9" width="8" height="6" rx="1"/>')}</button></div>`;
++    h += `</div>`;
++  }
++  P.innerHTML = h;
++}
++function applyStyle(key, v){
++  style[key] = v; savePrefs();
++  for (const id of sel){
++    const s = byId(id); if (!s) continue;
++    if (key === 'arrows' || key === 'route'){ if (s.type === 'connector'){ s[key] = v; if (key === 'route') s.bend = 0; } continue; }
++    if (key === 'fontSize' && s.type === 'device') continue;
++    if ((key === 'dash' || key === 'size') && (s.type === 'device' || s.type === 'note' || s.type === 'text')) continue;
++    s[key] = v;
++    if (s.type === 'text') layoutText(s);
++  }
++  commit(); panelKey = ''; render();
++}
++$('#stylePanel').addEventListener('click', e => {
++  const b = e.target.closest('button'); if (!b) return;
++  if (b.dataset.set) return applyStyle(b.dataset.set, b.dataset.v);
++  if (b.dataset.preset){
++    const l = LINKS[b.dataset.preset];
++    for (const id of sel){ const s = byId(id); if (s && s.type === 'connector') Object.assign(s, {color: l.color, dash: l.dash, size: l.size}); }
++    commit(); panelKey = ''; render(); return;
++  }
++  const a = b.dataset.act;
++  if (a === 'front' || a === 'back') reorder(a);
++  else if (a === 'dup'){ sel = new Set(duplicate([...sel])); commit(); render(); }
++  else if (a === 'del') deleteSel();
++  else if (a && a.startsWith('al-')) align(a.slice(3));
++  else if (a && a.startsWith('dist-')) align(a);
++});
++$('#stylePanel').addEventListener('input', e => {
++  const f = e.target.closest('[data-prop]'); if (!f || sel.size !== 1) return;
++  const s = byId([...sel][0]); if (!s) return;
++  const k = f.dataset.prop;
++  if (k === 'kind'){ s.kind = f.value; s.color = DEVICES[f.value].color; if (DEVICES[f.value].shape === 'circle') s.h = s.w; panelKey = ''; }
++  else s[k] = f.value;
++  render();
++});
++$('#stylePanel').addEventListener('change', () => commit());
++
++/* ---------- files & export ---------- */
++function download(name, blob){
++  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
++  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
++}
++const clean = t => String(t || '').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-');
++const fileBase = () => clean(board.name) || 'idea-board';
++const exportBase = () => fileBase() + (pages.length > 1 && pages[curPage] ? '-' + clean(pageLabel(curPage)) : '');
++function saveFile(){
++  syncPage();
++  const data = {app: 'idea-board', version: 2, name: board.name, savedAt: new Date().toISOString(), current: curPage, pages: pages.map(p => ({id: p.id, name: p.name, cam: p.cam, shapes: p.shapes}))};
++  download(fileBase() + '.ideaboard.json', new Blob([JSON.stringify(data, null, 1)], {type: 'application/json'}));
++  toast('Saved ' + fileBase() + '.ideaboard.json');
++}
++function openFile(f){
++  const r = new FileReader();
++  r.onload = () => {
++    try {
++      const d = JSON.parse(r.result);
++      let pg;
++      if (d && Array.isArray(d.pages) && d.pages.length) pg = d.pages.map((p, i) => ({id: p.id || uid(), name: normPageName(p.name), cam: p.cam || null, shapes: Array.isArray(p.shapes) ? p.shapes : []}));
++      else if (d && Array.isArray(d.shapes)) pg = [{id: uid(), name: '', cam: null, shapes: d.shapes}];
++      else throw new Error('bad');
++      board.name = d.name || f.name.replace(/\.(ideaboard\.)?json$/, ''); $('#boardName').value = board.name;
++      for (const k in histories) delete histories[k];
++      pages = pg; curPage = -1; switchPage(Math.min(d.current | 0, pages.length - 1), true);
++      if (!pages[curPage].cam) zoomFit(board.shapes, true);
++      toast(`Opened ${f.name} (${pages.length} page${pages.length > 1 ? 's' : ''})`);
++    } catch (e) { toast('That file is not an Idea Board file'); }
++  };
++  r.readAsText(f);
++}
++function exportSvgString(onlySel){
++  const shapes = onlySel && sel.size ? cloneShapes([...sel]).map(s => byId(s.id)).filter(Boolean) : board.shapes;
++  const b = union(shapes.map(s => { const hb = hitBounds(s); if (s.type === 'connector'){ const lb = connLabelBox(s, connGeom(s)); return union([hb, lb]); } return hb; }));
++  if (!b) return null;
++  const pad = 32, W = Math.ceil(b.w + pad * 2), H = Math.ceil(b.h + pad * 2);
++  const saved = editing; editing = null;
++  const body = renderShapesSvg(shapes); editing = saved;
++  return {W, H, svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="${r2(b.x - pad)} ${r2(b.y - pad)} ${W} ${H}" font-family='${FONT}'>` +
++    `<defs><filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity=".18"/></filter></defs>` +
++    `<rect x="${r2(b.x - pad)}" y="${r2(b.y - pad)}" width="${W}" height="${H}" fill="${BG()}"/>${body}</svg>`};
++}
++function exportSVG(){ const r = exportSvgString(true); if (!r) return toast('Nothing to export'); download(exportBase() + '.svg', new Blob([r.svg], {type: 'image/svg+xml'})); }
++function exportPNG(){
++  const r = exportSvgString(true); if (!r) return toast('Nothing to export');
++  const img = new Image(), scale = 2;
++  img.onload = () => {
++    const c = document.createElement('canvas'); c.width = r.W * scale; c.height = r.H * scale;
++    const ctx = c.getContext('2d'); ctx.scale(scale, scale); ctx.drawImage(img, 0, 0);
++    c.toBlob(b => download(exportBase() + '.png', b), 'image/png');
++  };
++  img.onerror = () => toast('PNG export failed — try SVG');
++  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(r.svg);
++}
++$('#fileInput').addEventListener('change', e => { const f = e.target.files[0]; if (f) openFile(f); e.target.value = ''; });
++
++/* ---------- sample topology ---------- */
++function sampleTopology(ox = 0, oy = 0){
++  const S = [];
++  const dev = (kind, x, y, text, info, role) => { const s = makeShape('device', ox + x, oy + y, {kind}); Object.assign(s, {w: 64, h: 64, text, info, role}); S.push(s); return s; };
++  const cloud = (label, color, x, y) => { const s = makeShape('cloud', ox + x, oy + y, {text: label, color}); Object.assign(s, {w: 190, h: 110, fill: 'semi', dash: 'solid', size: 'm'}); S.push(s); return s; };
++  const zone = (text, x, y, w, h, color) => { const s = makeShape('zone', ox + x, oy + y); Object.assign(s, {w, h, text, color}); S.push(s); return s; };
++  const link = (a, b, preset, text = '', sp = '', ep = '', extra = {}) => {
++    const l = LINKS[preset]; const s = makeShape('connector', 0, 0, {start: {id: a.id}, end: {id: b.id}, arrows: 'none'});
++    Object.assign(s, {color: l.color, dash: l.dash, size: l.size, text, startLabel: sp, endLabel: ep, route: 'straight', fontSize: 'm'}, extra); S.push(s); return s;
++  };
++  zone('Data Centre — Core', 150, 350, 560, 240, 'blue');
++  zone('Campus', 60, 640, 740, 390, 'green');
++  const inet = cloud('Internet', 'blue', 120, 0), mpls = cloud('MPLS WAN', 'violet', 560, 0);
++  const fw = dev('firewall', 210, 210, 'FW-EDGE-01', 'Security team', 'ML');
++  const rtr = dev('router', 625, 210, 'MAN-RTR-01', 'ASR 920 · 10.0.0.1', 'ML');
++  const c1 = dev('l3switch', 260, 440, 'CORE-01', 'N9K-C93180YC · 10.0.1.1', 'CL');
++  const c2 = dev('l3switch', 540, 440, 'CORE-02', 'N9K-C93180YC · 10.0.1.2', 'CL');
++  const d1 = dev('l3switch', 260, 700, 'DIST-01', 'C9500-24Y4C · 10.0.2.1', 'DL');
++  const d2 = dev('l3switch', 540, 700, 'DIST-02', 'C9500-24Y4C · 10.0.2.2', 'DL');
++  const a1 = dev('switch', 130, 910, 'ACC-01', 'C9300L-48P', 'AS');
++  const a2 = dev('switch', 400, 910, 'ACC-02', 'C9300L-48P', 'AS');
++  const a3 = dev('switch', 670, 910, 'ACC-03', 'C9300L-48P', 'AS');
++  link(inet, fw, 'wan', 'ISP 1G', '', 'eth1');
++  link(mpls, rtr, 'wan', 'CCT-10023 · 1G', '', 'Gi0/0/0');
++  link(fw, c1, 'fiber', '', 'eth2', 'Eth1/1');
++  link(fw, c2, 'fiber', '', 'eth3', 'Eth1/1');
++  link(rtr, c1, 'smf', '', 'Te0/0/2', 'Eth1/2');
++  link(rtr, c2, 'smf', '', 'Te0/0/3', 'Eth1/2');
++  link(c1, c2, 'pc', 'vPC peer-link · Po1');
++  link(c1, d1, 'smf', '', 'Eth1/10', 'Te1/0/1'); link(c2, d2, 'smf', '', 'Eth1/10', 'Te1/0/1');
++  link(c1, d2, 'smf', '', '', '', {bend: 0}); link(c2, d1, 'smf');
++  link(d1, d2, 'pc', 'Po10', '', '');
++  for (const a of [a1, a2, a3]){ link(d1, a, 'trunk'); link(d2, a, 'trunk'); }
++  return S;
++}
++function insertSample(boot = false){
++  const c = toWorld(innerWidth / 2, innerHeight / 2);
++  const shapes = sampleTopology(0, 0);
++  const b = union(shapes.filter(s => s.type !== 'connector').map(hitBounds));
++  const dx = board.shapes.length ? c.x - (b.x + b.w / 2) : 0, dy = board.shapes.length ? c.y - (b.y + b.h / 2) : 0;
++  for (const s of shapes){ if (s.type !== 'connector'){ s.x += dx; s.y += dy; } }
++  board.shapes.unshift(...shapes.filter(s => s.type === 'zone'));
++  board.shapes.push(...shapes.filter(s => s.type !== 'zone'));
++  sel = new Set(shapes.map(s => s.id)); commit(); zoomFit(shapes, !board.shapes.length || boot); sel.clear(); render();
++}
++
++/* ---------- menu, theme, help ---------- */
++function closeMenu(){ $('#menu').classList.remove('open'); }
++$('#menuBtn').addEventListener('click', e => { e.stopPropagation(); closePages(); $('#menu').classList.toggle('open'); syncMenu(); });
++document.addEventListener('click', e => { if (!e.target.closest('#menu') && !e.target.closest('#menuBtn')) closeMenu(); });
++function syncMenu(){ $('#mGrid').textContent = prefs.grid ? '✓' : ''; $('#mSnap').textContent = prefs.snap ? '✓' : ''; $('#mGuides').textContent = prefs.guides ? '✓' : ''; $('#mTheme').textContent = isDark() ? '✓' : ''; }
++$('#menu').addEventListener('click', e => {
++  const b = e.target.closest('[data-menu]'); if (!b) return;
++  const m = b.dataset.menu; closeMenu();
++  if (m === 'new'){
++    syncPage();
++    if (pages.some(p => p.shapes.length) && !confirm('Start a new board? Save the current one to a file first if you want to keep it.')) return;
++    board.name = 'Untitled board'; $('#boardName').value = board.name;
++    for (const k in histories) delete histories[k];
++    pages = [{id: uid(), name: '', shapes: [], cam: null}]; curPage = -1; switchPage(0, true);
++  }
++  if (m === 'open') $('#fileInput').click();
++  if (m === 'save') saveFile();
++  if (m === 'png') exportPNG();
++  if (m === 'svg') exportSVG();
++  if (m === 'sample') insertSample();
++  if (m === 'grid'){ prefs.grid = !prefs.grid; savePrefs(); render(); }
++  if (m === 'guides'){ prefs.guides = !prefs.guides; savePrefs(); toast('Alignment guides ' + (prefs.guides ? 'on' : 'off')); }
++  if (m === 'snap'){ prefs.snap = !prefs.snap; savePrefs(); toast('Snap to grid ' + (prefs.snap ? 'on' : 'off')); }
++  if (m === 'theme') toggleTheme();
++  if (m === 'help') $('#help').classList.add('open');
++});
++function applyTheme(){
++  const dark = prefs.theme ? prefs.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
++  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
++  buildToolbar(); buildLibrary(); layoutChrome(); panelKey = ''; render();
++}
++function toggleTheme(){ prefs.theme = isDark() ? 'light' : 'dark'; savePrefs(); applyTheme(); }
++matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (!prefs.theme) applyTheme(); });
++$('#help').addEventListener('click', e => { if (e.target.id === 'help') $('#help').classList.remove('open'); });
++$('#boardName').addEventListener('input', e => { board.name = e.target.value; save(); });
++$('#boardName').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') e.target.blur(); });
++$('#bottomleft').addEventListener('click', e => {
++  const a = e.target.closest('[data-act]')?.dataset.act;
++  if (a === 'undo') undo(); if (a === 'redo') redo();
++  if (a === 'zoomin') zoomTo(cam.z * 1.25); if (a === 'zoomout') zoomTo(cam.z / 1.25);
++  if (a === 'zoomreset') zoomTo(1); if (a === 'zoomfit') zoomFit();
++});
++let toastT = 0;
++function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1800); }
++const HELP = [
++  ['Select', 'V'], ['Hand / pan', 'H or hold Space'], ['Pencil (freehand)', 'P'], ['Eraser', 'E'], ['Tool lock (keep tool)', 'Q'],
++  ['Previous / next page', 'PageUp / PageDown'], ['Skip guides & link snapping', 'Hold Ctrl while dragging'], ['Link (between devices)', 'L'], ['Arrow', 'A'], ['Text', 'T'], ['Sticky note', 'N'],
++  ['Rectangle / Ellipse / Diamond', 'R / O / D'], ['Cloud / WAN', 'C'], ['Zone / site frame', 'F'], ['Router / L3 / Switch / FW / Server', '1 – 5'],
++  ['Edit label', 'Double-click or Enter'], ['Don\'t snap link to shape', 'Hold Ctrl while dragging'], ['Duplicate', 'Ctrl D or Alt-drag'], ['Copy / Cut / Paste', 'Ctrl C / X / V'],
++  ['Undo / Redo', 'Ctrl Z / Ctrl Shift Z'], ['Delete', 'Del / Backspace'], ['Select all', 'Ctrl A'], ['Nudge', 'Arrows (Shift = 10px)'],
++  ['Bring forward / back', '] / ['], ['Zoom', 'Ctrl + wheel, + / -'], ['Zoom to fit / 100%', 'Shift 1 / Shift 0'], ['Pan', 'Wheel / trackpad'],
++  ['Save / Open file', 'Ctrl S / Ctrl O'], ['Export PNG', 'Ctrl Shift E'], ['Network library', 'Shift L'], ['Dark mode', 'Alt T'], ['This help', '?'],
++];
++$('#helpCols').innerHTML = HELP.map(([a, k]) => `<div class="k"><span>${a}</span><kbd>${k}</kbd></div>`).join('');
++
++/* ---------- keyboard ---------- */
++window.addEventListener('keydown', e => {
++  const tag = (e.target.tagName || '').toLowerCase();
++  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
++  const k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey;
++  if (e.key === ' '){ if (!spaceDown){ spaceDown = true; svgEl.style.cursor = 'grab'; } e.preventDefault(); return; }
++  if (mod){
++    if (k === 'z'){ e.preventDefault(); e.shiftKey ? redo() : undo(); }
++    else if (k === 'y'){ e.preventDefault(); redo(); }
++    else if (k === 'd'){ e.preventDefault(); if (sel.size){ sel = new Set(duplicate([...sel])); commit(); render(); } }
++    else if (k === 'c'){ copySel(false); }
++    else if (k === 'x'){ copySel(true); }
++    else if (k === 'a'){ e.preventDefault(); sel = new Set(board.shapes.map(s => s.id)); render(); }
++    else if (k === 's'){ e.preventDefault(); saveFile(); }
++    else if (k === 'o'){ e.preventDefault(); $('#fileInput').click(); }
++    else if (k === 'e' && e.shiftKey){ e.preventDefault(); exportPNG(); }
++    else if (k === '0'){ e.preventDefault(); zoomTo(1); }
++    else if (k === '=' || k === '+'){ e.preventDefault(); zoomTo(cam.z * 1.25); }
++    else if (k === '-'){ e.preventDefault(); zoomTo(cam.z / 1.25); }
++    return;
++  }
++  if (e.altKey && k === 't'){ e.preventDefault(); toggleTheme(); return; }
++  if (e.key === 'Escape'){ $('#help').classList.remove('open'); closeMenu(); closePages(); if (tool !== 'select') setTool('select'); else { sel.clear(); render(); } return; }
++  if (e.key === 'Delete' || e.key === 'Backspace'){ e.preventDefault(); deleteSel(); return; }
++  if (e.key === 'Enter' && sel.size === 1){ e.preventDefault(); const s = byId([...sel][0]); if (s && s.type !== 'draw') startEdit(s); return; }
++  if (e.key.startsWith('Arrow') && sel.size){ e.preventDefault(); const d = e.shiftKey ? 10 : 1; nudge(e.key === 'ArrowLeft' ? -d : e.key === 'ArrowRight' ? d : 0, e.key === 'ArrowUp' ? -d : e.key === 'ArrowDown' ? d : 0); return; }
++  if (e.key === '?'){ $('#help').classList.toggle('open'); return; }
++  if (e.key === 'PageDown'){ e.preventDefault(); if (curPage < pages.length - 1) switchPage(curPage + 1); return; }
++  if (e.key === 'PageUp'){ e.preventDefault(); if (curPage > 0) switchPage(curPage - 1); return; }
++  if (k === 'q' && !e.shiftKey){ toolLock = !toolLock; toast('Tool lock ' + (toolLock ? 'on' : 'off')); updateToolbar(); return; }
++  if (e.key === ']'){ reorder('front'); return; } if (e.key === '['){ reorder('back'); return; }
++  if (e.shiftKey && (e.code === 'Digit1')){ zoomFit(); return; }
++  if (e.shiftKey && (e.code === 'Digit0')){ zoomTo(1); return; }
++  if (e.shiftKey && k === 'l'){ $('#libBtn').click(); return; }
++  if (k === '=' || k === '+'){ zoomTo(cam.z * 1.25); return; } if (k === '-'){ zoomTo(cam.z / 1.25); return; }
++  if (e.shiftKey) return;
++  const map = {v: 'select', h: 'hand', p: 'draw', e: 'eraser', l: 'link', a: 'arrow', t: 'text', n: 'note', r: 'rect', o: 'ellipse', d: 'diamond', c: 'cloud', f: 'zone'};
++  const dmap = {'1': 'router', '2': 'l3switch', '3': 'switch', '4': 'firewall', '5': 'server'};
++  if (map[k]) setTool(map[k]); else if (dmap[k]) setTool('device', dmap[k]);
++});
++window.addEventListener('keyup', e => { if (e.key === ' '){ spaceDown = false; svgEl.style.cursor = cursorFor(); } });
++window.addEventListener('blur', () => { spaceDown = false; });
++document.addEventListener('paste', e => {
++  const tag = (e.target.tagName || '').toLowerCase(); if (tag === 'input' || tag === 'textarea') return;
++  const txt = e.clipboardData && e.clipboardData.getData('text/plain');
++  if (txt){
++    try { const d = JSON.parse(txt); if (d && d.app === 'idea-board' && Array.isArray(d.shapes)){ e.preventDefault(); paste(d.shapes); return; } } catch (_) {}
++    e.preventDefault();
++    const p = lastMouse ? toWorld(lastMouse.x, lastMouse.y) : toWorld(innerWidth / 2, innerHeight / 2);
++    const s = addShape(makeShape('text', p.x, p.y, {text: txt.slice(0, 5000)})); layoutText(s); sel = new Set([s.id]); commit(); render(); return;
++  }
++  if (clip){ e.preventDefault(); paste(); }
++});
++window.addEventListener('resize', render);
++
++/* ---------- boot ---------- */
++const hadBoard = load();
++if (!pages.length){ pages = [{id: uid(), name: '', shapes: board.shapes, cam: null}]; curPage = 0; }
++updatePageUI();
++$('#boardName').value = board.name;
++$('#library').classList.toggle('open', prefs.library && innerWidth > 700);
++if (!(prefs.library && innerWidth > 700)) prefs.library = false;
++board.shapes.forEach(s => { if (s.type === 'text') layoutText(s); });
++lastSnap = JSON.stringify(board.shapes);
++applyTheme();
++if (!hadBoard){ board.name = 'Sample network'; $('#boardName').value = board.name; insertSample(true); undoStack = []; }
++else render();
++window.ideaBoard = {board, get cam(){ return cam; }, get pages(){ syncPage(); return pages; }, get curPage(){ return curPage; }, switchPage, addPage, zoomFit, exportSvgString};
++</script>
++</body>
++</html>
+diff --git a/projects/Idea_Board_Network/nginx.conf b/projects/Idea_Board_Network/nginx.conf
+new file mode 100644
+index 0000000..d212b21
+--- /dev/null
++++ b/projects/Idea_Board_Network/nginx.conf
+@@ -0,0 +1,20 @@
++server {
++    listen 8080;
++    server_name _;
++    root /usr/share/nginx/html;
++    index index.html;
++
++    # Security headers — the app is fully self-contained, no external calls.
++    add_header X-Content-Type-Options nosniff always;
++    add_header X-Frame-Options SAMEORIGIN always;
++    add_header Referrer-Policy no-referrer always;
++    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'" always;
++
++    gzip on;
++    gzip_types text/html image/svg+xml application/json;
++
++    location / {
++        try_files $uri $uri/ /index.html;
++        add_header Cache-Control "no-cache";
++    }
++}
+-- 
+2.43.0
+
